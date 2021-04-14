@@ -41,7 +41,7 @@ GLuint	program	= 0;	// ID holder for GPU program
 // global variables
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
-
+bool	b_wireframe = false;
 //*************************************
 // scene objects
 mesh2*		pMesh = nullptr;
@@ -139,6 +139,14 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			delete pMesh;
 			pMesh = load_model(mesh_obj);
 		}
+#ifndef GL_ES_VERSION_2_0
+		else if (key == GLFW_KEY_W)
+		{
+			b_wireframe = !b_wireframe;
+			glPolygonMode(GL_FRONT_AND_BACK, b_wireframe ? GL_LINE : GL_FILL);
+			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
+		}
+#endif
 	}
 }
 
