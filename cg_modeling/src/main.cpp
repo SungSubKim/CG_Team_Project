@@ -9,16 +9,16 @@
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char*	mesh_obj = "../bin/mesh/Map_proto.obj";
+static const char*	mesh_obj = "../bin/mesh/Map1.obj";
 
 
 //*************************************
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 0, 500, 200 );
-	vec3	at = vec3( 0, 0, 0 );
-	vec3	up = vec3( 0, 0, 1 );
+	vec3	eye = vec3(0, 50, 120 );
+	vec3	at = vec3( -2, 0, 0 );
+	vec3	up = vec3( 0, 1, 0 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
 		
 	float	fovy = PI/4.0f; // must be in radian
@@ -31,7 +31,7 @@ struct camera
 //*************************************
 // window objects
 GLFWwindow*	window = nullptr;
-ivec2		window_size = cg_default_window_size(); // initial window size
+ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
 
 //*************************************
 // OpenGL objects
