@@ -9,7 +9,7 @@
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char*	mesh_obj = "../bin/mesh/Map1.obj";
+static const char*	mesh_obj = "../bin/mesh/Map2_black.obj";
 
 
 //*************************************
@@ -174,7 +174,7 @@ bool user_init()
 	print_help();
 
 	// init GL states
-	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
+	glClearColor( 0/255.0f, 0/255.0f, 0/255.0f, 1.0f );	// set clear color
 	glEnable( GL_CULL_FACE );								// turn on backface culling
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
 	glEnable( GL_TEXTURE_2D );

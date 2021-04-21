@@ -1,10 +1,10 @@
 mtllib  Map1.mtl
-g Map1&Map2_v8_Body1_0
+g Map1&Map2_v11_Body1_0
 v 46 18 -27
 v 46 18 -18
 v 46 17.5 -18
 v 46 17.5 -27
-usemtl Fabric_(Light_Brown)
+usemtl Paint_-_Enamel_Glossy_(Green)
 f 1 2 4
 f 4 2 3
 v 25.1474 18 -1.24429
@@ -400,14 +400,14 @@ v 46 18 -18
 v 64 18 -18
 v 64 17.5 -18
 v 46 17.5 -18
-usemtl Fabric_(Light_Brown)
+usemtl Paint_-_Enamel_Glossy_(Green)
 f 199 200 202
 f 202 200 201
 v 64 18 -27
 v 46 18 -27
 v 46 17.5 -27
 v 64 17.5 -27
-usemtl Fabric_(Light_Brown)
+usemtl Paint_-_Enamel_Glossy_(Green)
 f 203 204 206
 f 206 204 205
 v 64 17.5 -27
@@ -444,21 +444,21 @@ v 55 18 -9.00004
 v 55 18 18
 v 55 17.5 18
 v 55 17.5 -9.00004
-usemtl Fabric_(Light_Brown)
+usemtl Paint_-_Enamel_Glossy_(Green)
 f 223 224 226
 f 226 224 225
 v 55 18 18
 v 64 18 18
 v 64 17.5 18
 v 55 17.5 18
-usemtl Fabric_(Light_Brown)
+usemtl Paint_-_Enamel_Glossy_(Green)
 f 227 228 230
 f 230 228 229
 v 64 18 -9.00004
 v 55 18 -9.00004
 v 55 17.5 -9.00004
 v 64 17.5 -9.00004
-usemtl Fabric_(Light_Brown)
+usemtl Paint_-_Enamel_Glossy_(Green)
 f 231 232 234
 f 234 232 233
 v 64 17.5 -9.00004
