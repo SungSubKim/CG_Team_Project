@@ -3,14 +3,15 @@
 #include "cgut2.h"			// slee's OpenGL utility
 #include "trackball.h"
 #include "assimp_loader.h"
-#include "circle.h"
+//#include "circle.h"
 
 //*************************************
 // global constants
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char*	mesh_obj = "../bin/mesh/Map2_black.obj";
+static const char* mesh_obj = "../bin/mesh/Map2_black.obj";
+static const char* sphere_obj = "../bin/mesh/tmpcharacter.obj";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -29,66 +30,13 @@ struct camera
 	mat4	projection_matrix;
 };
 
-auto	circles = std::move(create_circles());
+//auto	circles = std::move(create_circles());
+vec3 s_center = vec3(-62, 22 ,-35);
+mat4 model_matrix2;
 GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint index_buffer = 0;		// ID holder for index buffer
 uint NUM_VERTEX = (36 + 1)*(72 + 1);
-GLuint	vertex_array = 0;	// ID holder for vertex array object
-std::vector<vertex> create_planet_vertices()
-{
-	std::vector<vertex> v;
-	uint lan = 36, lon = 72;
-	for (uint i = 0; i < lan + 1; i++) // langitude
-	{
-		float theta = PI * i / float(lan), c = cos(theta), s = sin(theta);
-		for (uint j = 0; j < lon + 1; j++) {
-			float p = 2 * PI * j / float(lon), c2 = cos(p), s2 = sin(p);
-			v.push_back({ vec3(s * c2,s * s2,c), vec3(s * c2,s * s2,c), vec2(p / 2.0f / PI,theta / PI) });
-		}
-	}
-	return v;
-}
-void update_planet_buffer(const std::vector<vertex>& vertices)
-{
-
-	// clear and create new buffers
-	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
-
-	// check exceptions
-	if (vertices.empty()) { printf("[error] vertices is empty.\n"); return; }
-
-	// create buffers
-	std::vector<uint> indices;
-	for (uint k = 0; k < NUM_VERTEX - 74; k++)
-	{
-		if (k % 73 == 72)
-			continue;
-		indices.push_back(k);
-		indices.push_back((k + 73));
-		indices.push_back((k + 1));
-
-		indices.push_back(k + 1);
-		indices.push_back(k + 73);
-		indices.push_back(k + 74);
-	}
-
-	// generation of vertex buffer: use vertices as it is
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-
-	// geneation of index buffer
-	glGenBuffers(1, &index_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (vertex_array) glDeleteVertexArrays(1, &vertex_array);
-	vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
-	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return; }
-}
-//*************************************
+GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 // window objects
 GLFWwindow*	window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
@@ -104,7 +52,7 @@ bool	show_texcoord = false;
 bool	b_wireframe = false;
 //*************************************
 // scene objects
-mesh2*		pMesh = nullptr;
+mesh2* pMesh = nullptr, * sMesh = nullptr;
 camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false;
@@ -125,15 +73,15 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	if (l) {
-		circles[0].center.x -= (t - old_t) * 50;
+		s_center.x -= (t - old_t) * 50;
 		//printf("%f\n",circles[0].center.y);
 	}
 	else if (r)
-		circles[0].center.x += (t - old_t) * 50;
+		s_center.x += (t - old_t) * 50;
 	else if (u)
-		circles[0].center.z -= (t - old_t) * 50;
+		s_center.z -= (t - old_t) * 50;
 	else if (d)
-		circles[0].center.z += (t - old_t) * 50;
+		s_center.z += (t - old_t) * 50;
 	old_t = t;
 	float scale = 1.0f;
 	mat4 model_matrix = mat4::scale( scale, scale, scale );
@@ -172,30 +120,51 @@ void render()
 
 		// render vertices: trigger shader programs to process vertex data
 		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, pMesh->index_buffer );
+		GLint uloc;
+	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 		glDrawElements( GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start*sizeof(GLuint)) );
 	}
 
 	// swap front and back buffers, and display to screen
 	//glfwSwapBuffers( window );
 	// bind vertex array object
+	glBindVertexArray(sMesh->vertex_array);
+	model_matrix2 = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;
+	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {
+		geometry& g = sMesh->geometry_list[k];
 
-	glBindVertexArray(vertex_array);
-	float t = float(glfwGetTime());
-	glUniform1i(glGetUniformLocation(program, "circle"), true);
-	// render two circles: trigger shader program to process vertex data
-	for (auto& c : circles)
-	{
-		// per-circle update
-		c.update(t);
-		// update per-circle uniforms
-		GLint uloc;
-		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, c.model_matrix);
-
-		// per-circle draw calls
-		glDrawElements(GL_TRIANGLES, (NUM_VERTEX - 73) * 3 * 2, GL_UNSIGNED_INT, nullptr);
+		if (g.mat->textures.diffuse) {
+			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		}
+		else {
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+		}
+		//sMesh.
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sMesh->index_buffer);
+		GLint uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix2);
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 	}
-	glUniform1i(glGetUniformLocation(program, "circle"), false);
-	// swap front and back buffers, and display to screen
+	//glBindVertexArray(vertex_array);
+	//float t = float(glfwGetTime());
+	//glUniform1i(glGetUniformLocation(program, "circle"), true);
+	//// render two circles: trigger shader program to process vertex data
+	//for (auto& c : circles)
+	//{
+	//	// per-circle update
+	//	c.update(t);
+	//	// update per-circle uniforms
+	//	GLint uloc;
+	//	uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, c.model_matrix);
+
+	//	// per-circle draw calls
+	//	glDrawElements(GL_TRIANGLES, (NUM_VERTEX - 73) * 3 * 2, GL_UNSIGNED_INT, nullptr);
+	//}
+	//glUniform1i(glGetUniformLocation(program, "circle"), false);
+	//// swap front and back buffers, and display to screen
 	glfwSwapBuffers(window);
 }
 
@@ -300,11 +269,8 @@ bool user_init()
 	// load the mesh
 	pMesh = load_model(mesh_obj);
 	if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
-	// define the position of four corner vertices
-	unit_circle_vertices = std::move(create_planet_vertices());
-
-	// create vertex buffer; called again when index buffering mode is toggled
-	update_planet_buffer(unit_circle_vertices);
+	sMesh = load_model(sphere_obj);
+	if (pMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
 
 	return true;
 }
