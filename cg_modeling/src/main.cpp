@@ -3,6 +3,7 @@
 #include "cgut2.h"			// slee's OpenGL utility
 #include "trackball.h"
 #include "assimp_loader.h"
+#include "circle.h"
 
 //*************************************
 // global constants
@@ -11,7 +12,7 @@ static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
 static const char*	mesh_obj = "../bin/mesh/Map2_black.obj";
 
-
+std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
 // common structures
 struct camera
@@ -28,6 +29,65 @@ struct camera
 	mat4	projection_matrix;
 };
 
+auto	circles = std::move(create_circles());
+GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+GLuint index_buffer = 0;		// ID holder for index buffer
+uint NUM_VERTEX = (36 + 1)*(72 + 1);
+GLuint	vertex_array = 0;	// ID holder for vertex array object
+std::vector<vertex> create_planet_vertices()
+{
+	std::vector<vertex> v;
+	uint lan = 36, lon = 72;
+	for (uint i = 0; i < lan + 1; i++) // langitude
+	{
+		float theta = PI * i / float(lan), c = cos(theta), s = sin(theta);
+		for (uint j = 0; j < lon + 1; j++) {
+			float p = 2 * PI * j / float(lon), c2 = cos(p), s2 = sin(p);
+			v.push_back({ vec3(s * c2,s * s2,c), vec3(s * c2,s * s2,c), vec2(p / 2.0f / PI,theta / PI) });
+		}
+	}
+	return v;
+}
+void update_planet_buffer(const std::vector<vertex>& vertices)
+{
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+
+	// check exceptions
+	if (vertices.empty()) { printf("[error] vertices is empty.\n"); return; }
+
+	// create buffers
+	std::vector<uint> indices;
+	for (uint k = 0; k < NUM_VERTEX - 74; k++)
+	{
+		if (k % 73 == 72)
+			continue;
+		indices.push_back(k);
+		indices.push_back((k + 73));
+		indices.push_back((k + 1));
+
+		indices.push_back(k + 1);
+		indices.push_back(k + 73);
+		indices.push_back(k + 74);
+	}
+
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (vertex_array) glDeleteVertexArrays(1, &vertex_array);
+	vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return; }
+}
 //*************************************
 // window objects
 GLFWwindow*	window = nullptr;
@@ -47,8 +107,13 @@ bool	b_wireframe = false;
 mesh2*		pMesh = nullptr;
 camera		cam;
 trackball	tb;
-
+bool l = false, r = false, u = false, d = false;
+float old_t=0;
+mat4 model_matrix0;
 //*************************************
+float min(float a, float b) {
+	return a < b ? a : b;
+}
 void update()
 {
 	glUseProgram(program);
@@ -59,6 +124,17 @@ void update()
 
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
+	if (l) {
+		circles[0].center.x -= (t - old_t) * 50;
+		//printf("%f\n",circles[0].center.y);
+	}
+	else if (r)
+		circles[0].center.x += (t - old_t) * 50;
+	else if (u)
+		circles[0].center.z -= (t - old_t) * 50;
+	else if (d)
+		circles[0].center.z += (t - old_t) * 50;
+	old_t = t;
 	float scale = 1.0f;
 	mat4 model_matrix = mat4::scale( scale, scale, scale );
 
@@ -70,7 +146,7 @@ void update()
 
 	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
 }
-
+float old_t2 = 0;
 void render()
 {
 	// clear screen (with background color) and clear depth buffer
@@ -100,7 +176,27 @@ void render()
 	}
 
 	// swap front and back buffers, and display to screen
-	glfwSwapBuffers( window );
+	//glfwSwapBuffers( window );
+	// bind vertex array object
+
+	glBindVertexArray(vertex_array);
+	float t = float(glfwGetTime());
+	glUniform1i(glGetUniformLocation(program, "circle"), true);
+	// render two circles: trigger shader program to process vertex data
+	for (auto& c : circles)
+	{
+		// per-circle update
+		c.update(t);
+		// update per-circle uniforms
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, c.model_matrix);
+
+		// per-circle draw calls
+		glDrawElements(GL_TRIANGLES, (NUM_VERTEX - 73) * 3 * 2, GL_UNSIGNED_INT, nullptr);
+	}
+	glUniform1i(glGetUniformLocation(program, "circle"), false);
+	// swap front and back buffers, and display to screen
+	glfwSwapBuffers(window);
 }
 
 void reshape( GLFWwindow* window, int width, int height )
@@ -125,11 +221,11 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
 	if(action==GLFW_PRESS)
 	{
-		if(key==GLFW_KEY_ESCAPE||key==GLFW_KEY_Q)	glfwSetWindowShouldClose( window, GL_TRUE );
-		else if(key==GLFW_KEY_H||key==GLFW_KEY_F1)	print_help();
-		else if(key==GLFW_KEY_HOME)					cam = camera();
-		else if(key==GLFW_KEY_T)					show_texcoord = !show_texcoord;
-		else if(key==GLFW_KEY_D)
+		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
+		else if (key == GLFW_KEY_HOME)					cam = camera();
+		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
+		else if (key == GLFW_KEY_D)
 		{
 			static bool is_obj = true;
 			is_obj = !is_obj;
@@ -146,7 +242,28 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			glPolygonMode(GL_FRONT_AND_BACK, b_wireframe ? GL_LINE : GL_FILL);
 			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
 		}
+		else if (key == GLFW_KEY_LEFT) {
+			l = true;
+			old_t2 = (float)glfwGetTime();
+		}
+			
+		else if (key == GLFW_KEY_RIGHT)
+			r = true;
+		else if (key == GLFW_KEY_UP)
+			u = true;
+		else if (key == GLFW_KEY_DOWN)
+			d = true;
 #endif
+	}
+	else if (action == GLFW_RELEASE) {
+		if (key == GLFW_KEY_LEFT)
+			l = false;
+		else if (key == GLFW_KEY_RIGHT)
+			r = false;
+		else if (key == GLFW_KEY_UP)
+			u = false;
+		else if (key == GLFW_KEY_DOWN)
+			d = false;
 	}
 }
 
@@ -183,6 +300,11 @@ bool user_init()
 	// load the mesh
 	pMesh = load_model(mesh_obj);
 	if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
+	// define the position of four corner vertices
+	unit_circle_vertices = std::move(create_planet_vertices());
+
+	// create vertex buffer; called again when index buffering mode is toggled
+	update_planet_buffer(unit_circle_vertices);
 
 	return true;
 }

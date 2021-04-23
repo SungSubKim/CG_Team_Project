@@ -15,8 +15,11 @@ out vec4 fragColor;
 uniform sampler2D TEX;
 uniform bool use_texture;
 uniform vec4 diffuse;
-
+uniform bool circle;
 void main()
 {
-	fragColor = use_texture ? texture( TEX, tc ) : diffuse;
+	if(circle)
+		fragColor = vec4(tc.xy,0,1);
+	else
+		fragColor = use_texture ? texture( TEX, tc ) : diffuse;
 }
