@@ -31,11 +31,12 @@ struct camera
 };
 
 //auto	circles = std::move(create_circles());
-vec3 s_center = vec3(-62, 22 ,-35);
-mat4 model_matrix2;
+vec3 s_center = vec3(-62, 22 ,-35); // sphere의 시작지점
+mat4 model_matrix_sphere; //sphere를 조종하는 model matrix
+float scale = 1.0f;
+mat4 model_matrix_map = mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
 GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint index_buffer = 0;		// ID holder for index buffer
-uint NUM_VERTEX = (36 + 1)*(72 + 1);
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 // window objects
 GLFWwindow*	window = nullptr;
@@ -83,14 +84,11 @@ void update()
 	else if (d)
 		s_center.z += (t - old_t) * 50;
 	old_t = t;
-	float scale = 1.0f;
-	mat4 model_matrix = mat4::scale( scale, scale, scale );
 
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
-	uloc = glGetUniformLocation( program, "model_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, model_matrix );
 
 	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
 }
@@ -106,6 +104,7 @@ void render()
 	// bind vertex array object
 	glBindVertexArray( pMesh->vertex_array );
 
+	GLint uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_map);
 	for( size_t k=0, kn=pMesh->geometry_list.size(); k < kn; k++ ) {
 		geometry& g = pMesh->geometry_list[k];
 
@@ -129,7 +128,7 @@ void render()
 	//glfwSwapBuffers( window );
 	// bind vertex array object
 	glBindVertexArray(sMesh->vertex_array);
-	model_matrix2 = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;
+	model_matrix_sphere = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;// s_center의 정보를 반영
 	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {
 		geometry& g = sMesh->geometry_list[k];
 
@@ -145,26 +144,11 @@ void render()
 		//sMesh.
 		// render vertices: trigger shader programs to process vertex data
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sMesh->index_buffer);
-		GLint uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix2);
+		uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_sphere);
+		//model_matrix를 uniform으로 넘겨주기
 		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 	}
-	//glBindVertexArray(vertex_array);
-	//float t = float(glfwGetTime());
-	//glUniform1i(glGetUniformLocation(program, "circle"), true);
-	//// render two circles: trigger shader program to process vertex data
-	//for (auto& c : circles)
-	//{
-	//	// per-circle update
-	//	c.update(t);
-	//	// update per-circle uniforms
-	//	GLint uloc;
-	//	uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, c.model_matrix);
 
-	//	// per-circle draw calls
-	//	glDrawElements(GL_TRIANGLES, (NUM_VERTEX - 73) * 3 * 2, GL_UNSIGNED_INT, nullptr);
-	//}
-	//glUniform1i(glGetUniformLocation(program, "circle"), false);
-	//// swap front and back buffers, and display to screen
 	glfwSwapBuffers(window);
 }
 
