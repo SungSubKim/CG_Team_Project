@@ -30,6 +30,23 @@ struct camera
 	mat4	projection_matrix;
 };
 
+struct light_t
+{
+	vec4	position = vec4(1.0f, 1.0f, 1.0f, 0.0f);   // directional light
+	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+};
+
+struct material_t
+{
+	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	float	shininess = 100000.0f;
+};
+
+
 //auto	circles = std::move(create_circles());
 vec3 s_center = vec3(-62, 22 ,-35); // sphere의 시작지점
 mat4 model_matrix_sphere; //sphere를 조종하는 model matrix
@@ -59,6 +76,8 @@ trackball	tb;
 bool l = false, r = false, u = false, d = false;
 float old_t=0;
 mat4 model_matrix0;
+light_t		light;
+material_t	material;
 //*************************************
 float min(float a, float b) {
 	return a < b ? a : b;
@@ -90,6 +109,13 @@ void update()
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
 
+	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
+	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
+
+	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
+
 	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
 }
 float old_t2 = 0;
@@ -107,15 +133,21 @@ void render()
 	GLint uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_map);
 	for( size_t k=0, kn=pMesh->geometry_list.size(); k < kn; k++ ) {
 		geometry& g = pMesh->geometry_list[k];
-
+		
+		//printf("%lf\n", g.mat->textures.ambient.id);
 		if (g.mat->textures.diffuse) {
 			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 		} else {
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 1, (const float*)(&g.mat->ambient));
 			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
+			//glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 		}
+		
 
 		// render vertices: trigger shader programs to process vertex data
 		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, pMesh->index_buffer );
@@ -131,15 +163,19 @@ void render()
 	model_matrix_sphere = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;// s_center의 정보를 반영
 	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {
 		geometry& g = sMesh->geometry_list[k];
-
+		//g.mat->diffuse.x = 0.0f;
+		//g.mat->diffuse.a = 0.3f;
 		if (g.mat->textures.diffuse) {
+			printf("asdf\n");
 			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+			
 		}
 		else {
 			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+			//printf("%lf \n", g.mat->diffuse.a);
 		}
 		//sMesh.
 		// render vertices: trigger shader programs to process vertex data

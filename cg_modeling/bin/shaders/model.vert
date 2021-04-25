@@ -8,6 +8,8 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 
+out vec4 epos;	// eye-space position
+out vec3 norm;	// per-vertex normal before interpolation
 out vec2 tc;	// texture coordinate
 
 void main()
@@ -15,7 +17,7 @@ void main()
 	vec4 wpos = model_matrix * vec4(position,1);
 	vec4 epos = view_matrix * wpos;
 	gl_Position = projection_matrix * epos;
-
+	norm = normalize(mat3(view_matrix*model_matrix)*normal);
 	// pass texture coordinate to fragment shader
 	tc = texcoord;
 }
