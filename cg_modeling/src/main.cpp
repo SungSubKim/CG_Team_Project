@@ -163,6 +163,10 @@ void render()
 	model_matrix_sphere = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;// s_center의 정보를 반영
 	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {
 		geometry& g = sMesh->geometry_list[k];
+		/*g.mat->ambient.a = 0;
+		g.mat->diffuse.a = 0;
+		g.mat->specular.a = 0;
+		g.mat->emissive.a = 0;*/
 		//g.mat->diffuse.x = 0.0f;
 		//g.mat->diffuse.a = 0.3f;
 		if (g.mat->textures.diffuse) {
@@ -173,7 +177,10 @@ void render()
 			
 		}
 		else {
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 1, (const float*)(&g.mat->ambient));
 			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
 			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 			//printf("%lf \n", g.mat->diffuse.a);
 		}
