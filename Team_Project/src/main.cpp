@@ -10,7 +10,7 @@
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char* mesh_obj = "../bin/mesh/Map2_black.obj";
+static const char* mesh_obj = "../bin/mesh/Triangle.obj";
 static const char* sphere_obj = "../bin/mesh/tmpcharacter.obj";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
