@@ -3,6 +3,7 @@
 #include "cgut2.h"			// slee's OpenGL utility
 #include "trackball.h"
 #include "assimp_loader.h"
+//#include "stb_image.h"
 //#include "circle.h"
 
 //*************************************
@@ -10,8 +11,12 @@
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char* mesh_obj = "../bin/mesh/Triangle.obj";
+static const char* triangle_obj = "../bin/mesh/Triangle.obj";
 static const char* sphere_obj = "../bin/mesh/tmpcharacter.obj";
+static const char* sky_image_path = "../bin/images/skybox.jpeg"; //하늘 파일경로
+static const char* map_obj1 = "../bin/mesh/Map2_1.obj";
+static const char* map_obj2 = "../bin/mesh/Map2_2.obj";
+static const char* map_obj3 = "../bin/mesh/Map2_3.obj";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -52,9 +57,8 @@ vec3 s_center = vec3(-62, 22 ,-35); // sphere의 시작지점
 mat4 model_matrix_sphere; //sphere를 조종하는 model matrix
 float scale = 1.0f;
 mat4 model_matrix_map = mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
-GLuint vertex_buffer = 0;	// ID holder for vertex buffer
-GLuint index_buffer = 0;		// ID holder for index buffer
-GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
+mat4 model_matrix_background=mat4::translate(0.0f,0.0f,-250.0f)*mat4::scale(5000000.0f,5000000.0f,100.0f);
+
 // window objects
 GLFWwindow*	window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
@@ -62,7 +66,10 @@ ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial w
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
-
+GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+GLuint index_buffer = 0;		// ID holder for index buffer
+GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
+GLuint	TEX_SKY = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -70,7 +77,9 @@ bool	show_texcoord = false;
 bool	b_wireframe = false;
 //*************************************
 // scene objects
-mesh2* pMesh = nullptr, * sMesh = nullptr;
+mesh2* pMesh = nullptr, * sMesh = nullptr, * bMesh=nullptr;
+mesh2* mapMesh2_1 = nullptr, * mapMesh2_2 = nullptr, * mapMesh2_3 = nullptr;
+
 camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false;
@@ -114,9 +123,15 @@ void update()
 	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
 
+	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 
 	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
+	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
+									// select the texture slot to bind
 }
 float old_t2 = 0;
 void render()
@@ -129,9 +144,9 @@ void render()
 
 	// bind vertex array object
 	glBindVertexArray( pMesh->vertex_array );
-
+	//맵의 위치
 	GLint uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_map);
-	for( size_t k=0, kn=pMesh->geometry_list.size(); k < kn; k++ ) {
+	for( size_t k=0, kn=pMesh->geometry_list.size(); k < kn; k++ ) { //삼각형
 		geometry& g = pMesh->geometry_list[k];
 		
 		//printf("%lf\n", g.mat->textures.ambient.id);
@@ -140,10 +155,10 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 		} else {
-			glUniform4fv(glGetUniformLocation(program, "ambient"), 1, (const float*)(&g.mat->ambient));
-			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
-			glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
-			glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 2, (const float*)(&g.mat->ambient));
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 2, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 2, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 2, (const float*)(&g.mat->emissive));
 			//glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 		}
@@ -155,35 +170,110 @@ void render()
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 		glDrawElements( GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start*sizeof(GLuint)) );
 	}
+	glBindVertexArray(mapMesh2_1->vertex_array);
+	for (size_t k = 0, kn = mapMesh2_1->geometry_list.size(); k < kn; k++) { //맵2_1
+		geometry& g = mapMesh2_1->geometry_list[k];
 
+		//printf("%lf\n", g.mat->textures.ambient.id);
+		if (g.mat->textures.diffuse) {
+			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		}
+		else {
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 2, (const float*)(&g.mat->ambient));
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 2, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 2, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 2, (const float*)(&g.mat->emissive));
+			//glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+		}
+
+
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mapMesh2_1->index_buffer);
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+	}
+
+	glBindVertexArray(mapMesh2_2->vertex_array);
+	for (size_t k = 0, kn = mapMesh2_2->geometry_list.size(); k < kn; k++) { //맵2_2
+		geometry& g = mapMesh2_2->geometry_list[k];
+
+		//printf("%lf\n", g.mat->textures.ambient.id);
+		if (g.mat->textures.diffuse) {
+			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		}
+		else {
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 2, (const float*)(&g.mat->ambient));
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 2, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 2, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 2, (const float*)(&g.mat->emissive));
+			//glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+		}
+
+
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mapMesh2_2->index_buffer);
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+	}
+
+	glBindVertexArray(mapMesh2_3->vertex_array);
+	for (size_t k = 0, kn = mapMesh2_3->geometry_list.size(); k < kn; k++) { //맵2_3
+		geometry& g = mapMesh2_3->geometry_list[k];
+
+		//printf("%lf\n", g.mat->textures.ambient.id);
+		if (g.mat->textures.diffuse) {
+			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		}
+		else {
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 2, (const float*)(&g.mat->ambient));
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 2, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 2, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 2, (const float*)(&g.mat->emissive));
+			//glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+		}
+
+
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mapMesh2_3->index_buffer);
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+	}
 	// swap front and back buffers, and display to screen
 	//glfwSwapBuffers( window );
 	// bind vertex array object
-	glBindVertexArray(sMesh->vertex_array);
+	glBindVertexArray(sMesh->vertex_array); //구 사용
 	model_matrix_sphere = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;// s_center의 정보를 반영
-	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {
+	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {// 구
 		geometry& g = sMesh->geometry_list[k];
-		/*g.mat->ambient.a = 0;
-		g.mat->diffuse.a = 0;
-		g.mat->specular.a = 0;
-		g.mat->emissive.a = 0;*/
-		//g.mat->diffuse.x = 0.0f;
-		//g.mat->diffuse.a = 0.3f;
+		
 		if (g.mat->textures.diffuse) {
 			printf("asdf\n");
 			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			
 		}
 		else {
-			glUniform4fv(glGetUniformLocation(program, "ambient"), 1, (const float*)(&g.mat->ambient));
-			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
-			glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
-			glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 0, (const float*)(&g.mat->ambient));
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 0, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 0, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 0, (const float*)(&g.mat->emissive));
 			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 			//printf("%lf \n", g.mat->diffuse.a);
 		}
+
 		//sMesh.
 		// render vertices: trigger shader programs to process vertex data
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sMesh->index_buffer);
@@ -191,7 +281,48 @@ void render()
 		//model_matrix를 uniform으로 넘겨주기
 		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 	}
+	
 
+	//printf("%lf\n", g.mat->textures.ambient.id);
+	uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
+	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);
+	glBindVertexArray(vertex_array);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	/*for (size_t k = 0, kn = bMesh->geometry_list.size(); k < kn; k++) {// 배경화면
+		geometry& g = bMesh->geometry_list[k];
+
+		if (g.mat->textures.diffuse) {
+			printf("asdf\n");
+			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+			glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+
+		}
+		else {
+			glUniform4fv(glGetUniformLocation(program, "ambient"), 0, (const float*)(&g.mat->ambient));
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 0, (const float*)(&g.mat->diffuse));
+			glUniform4fv(glGetUniformLocation(program, "specular"), 0, (const float*)(&g.mat->specular));
+			glUniform4fv(glGetUniformLocation(program, "emissive"), 0, (const float*)(&g.mat->emissive));
+			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+			//printf("%lf \n", g.mat->diffuse.a);
+		}
+
+		//sMesh.
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bMesh->index_buffer);
+		
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+	}*/
+
+	
+	// render vertices: trigger shader programs to process vertex data
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	//GLint uloc;
+	
+	
 	glfwSwapBuffers(window);
 }
 
@@ -229,7 +360,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			glFinish();
 			delete_texture_cache();
 			delete pMesh;
-			pMesh = load_model(mesh_obj);
+			pMesh = load_model(triangle_obj);
 		}
 #ifndef GL_ES_VERSION_2_0
 		else if (key == GLFW_KEY_W)
@@ -281,6 +412,41 @@ void motion( GLFWwindow* window, double x, double y )
 	cam.view_matrix = tb.update( npos );
 }
 
+GLuint create_texture(const char* image_path, bool mipmap = true, GLenum wrap = GL_CLAMP_TO_EDGE, GLenum filter = GL_LINEAR)
+{
+	// load image
+	image* i = cg_load_image(image_path); if (!i) return 0; // return null texture; 0 is reserved as a null texture
+	int		w = i->width, h = i->height, c = i->channels;
+
+	// induce internal format and format from image
+	GLint	internal_format = c == 1 ? GL_R8 : c == 2 ? GL_RG8 : c == 3 ? GL_RGB8 : GL_RGBA8;
+	GLenum	format = c == 1 ? GL_RED : c == 2 ? GL_RG : c == 3 ? GL_RGB : GL_RGBA;
+
+	// create a src texture (lena texture)
+	GLuint texture;
+	glGenTextures(1, &texture); if (texture == 0) { printf("%s(): failed in glGenTextures()\n", __func__); return 0; }
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, w, h, 0, format, GL_UNSIGNED_BYTE, i->ptr);
+	if (i) { delete i; i = nullptr; } // release image
+
+	// build mipmap
+	if (mipmap)
+	{
+		int mip_levels = 0; for (int k = w > h ? w : h; k; k >>= 1) mip_levels++;
+		for (int l = 1; l < mip_levels; l++)
+			glTexImage2D(GL_TEXTURE_2D, l, internal_format, (w >> l) == 0 ? 1 : (w >> l), (h >> l) == 0 ? 1 : (h >> l), 0, format, GL_UNSIGNED_BYTE, nullptr);
+		if (glGenerateMipmap) glGenerateMipmap(GL_TEXTURE_2D);
+	}
+
+	// set up texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, !mipmap ? filter : filter == GL_LINEAR ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+
+	return texture;
+}
+
 bool user_init()
 {
 	// log hotkeys
@@ -293,11 +459,38 @@ bool user_init()
 	glEnable( GL_TEXTURE_2D );
 	glActiveTexture( GL_TEXTURE0 );
 
+	vertex corners[4];
+	corners[0].pos = vec3(-1.0f, -1.0f, 0.0f);	corners[0].tex = vec2(0.0f, 0.0f);
+	corners[1].pos = vec3(+1.0f, -1.0f, 0.0f);	corners[1].tex = vec2(1.0f, 0.0f);
+	corners[2].pos = vec3(+1.0f, +1.0f, 0.0f);	corners[2].tex = vec2(1.0f, 1.0f);
+	corners[3].pos = vec3(-1.0f, +1.0f, 0.0f);	corners[3].tex = vec2(0.0f, 1.0f);
+	vertex vertices[6] = { corners[0], corners[1], corners[2], corners[0], corners[2], corners[3] };
+
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+
+	if (vertex_array) glDeleteVertexArrays(1, &vertex_array);
+	vertex_array = cg_create_vertex_array(vertex_buffer);
+	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
+
+	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
 	// load the mesh
-	pMesh = load_model(mesh_obj);
+	pMesh = load_model(triangle_obj);
 	if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
 	sMesh = load_model(sphere_obj);
 	if (pMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
+
+	//bMesh = load_model(sphere_obj);
+	//if (bMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
+	mapMesh2_1 = load_model(map_obj1);
+	if (mapMesh2_1 == nullptr) { printf("Unable to load mesh\n"); return false; }
+	mapMesh2_2 = load_model(map_obj2);
+	if (mapMesh2_2 == nullptr) { printf("Unable to load mesh\n"); return false; }
+	mapMesh2_3 = load_model(map_obj3);
+	if (mapMesh2_3 == nullptr) { printf("Unable to load mesh\n"); return false; }
 
 	return true;
 }
