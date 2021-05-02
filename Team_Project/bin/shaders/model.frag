@@ -47,7 +47,7 @@ void main()
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l+v);	// the halfway vector
 	vec4 iKd=texture(TEX_SKY,tc);
-	fragColor = phong( l, n, h, iKd );
+	//fragColor = phong( l, n, h, iKd );
 	fragColor=texture(TEX_SKY,tc);
 	
 	

@@ -19,7 +19,7 @@ void main()
 	vec4 epos = view_matrix * wpos;
 	
 	gl_Position = projection_matrix * epos;
-	
+	//gl_Position=vec4(position,1);
 	norm = normalize(mat3(view_matrix*model_matrix)*normal);
 	// pass texture coordinate to fragment shader
 	tc = texcoord;

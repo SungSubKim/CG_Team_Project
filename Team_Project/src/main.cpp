@@ -12,7 +12,7 @@ static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
 static const char* triangle_obj = "../bin/mesh/Triangle.obj";
-static const char* sphere_obj = "../bin/mesh/tmpcharacter.obj";
+static const char* sphere_obj = "../bin/mesh/tmpmaincharacter.obj";
 static const char* sky_image_path = "../bin/images/skybox.jpeg"; //하늘 파일경로
 static const char* map_obj1 = "../bin/mesh/Map2_1.obj";
 static const char* map_obj2 = "../bin/mesh/Map2_2.obj";
@@ -57,7 +57,7 @@ vec3 s_center = vec3(-62, 22 ,-35); // sphere의 시작지점
 mat4 model_matrix_sphere; //sphere를 조종하는 model matrix
 float scale = 1.0f;
 mat4 model_matrix_map = mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
-mat4 model_matrix_background=mat4::translate(0.0f,0.0f,-250.0f)*mat4::scale(5000000.0f,5000000.0f,100.0f);
+mat4 model_matrix_background=mat4::translate(0.0f,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
 
 // window objects
 GLFWwindow*	window = nullptr;
@@ -253,9 +253,9 @@ void render()
 	// swap front and back buffers, and display to screen
 	//glfwSwapBuffers( window );
 	// bind vertex array object
-	glBindVertexArray(sMesh->vertex_array); //구 사용
+	glBindVertexArray(sMesh->vertex_array); //메인캐릭터
 	model_matrix_sphere = mat4::translate(s_center) *mat4::scale(vec3(0.2f))  ;// s_center의 정보를 반영
-	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {// 구
+	for (size_t k = 0, kn = sMesh->geometry_list.size(); k < kn; k++) {
 		geometry& g = sMesh->geometry_list[k];
 		
 		if (g.mat->textures.diffuse) {
@@ -284,8 +284,8 @@ void render()
 	
 
 	//printf("%lf\n", g.mat->textures.ambient.id);
-	uloc = glGetUniformLocation(program, "model_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
-	glActiveTexture(GL_TEXTURE0);
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	glActiveTexture(GL_TEXTURE0); // 배경화면 그리기.
 	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
 	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);
 	glBindVertexArray(vertex_array);
@@ -471,12 +471,14 @@ bool user_init()
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-
 	if (vertex_array) glDeleteVertexArrays(1, &vertex_array);
 	vertex_array = cg_create_vertex_array(vertex_buffer);
 	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
 
+	//텍스쳐 로딩
 	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
+
+
 	// load the mesh
 	pMesh = load_model(triangle_obj);
 	if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
@@ -491,7 +493,7 @@ bool user_init()
 	if (mapMesh2_2 == nullptr) { printf("Unable to load mesh\n"); return false; }
 	mapMesh2_3 = load_model(map_obj3);
 	if (mapMesh2_3 == nullptr) { printf("Unable to load mesh\n"); return false; }
-
+	
 	return true;
 }
 
