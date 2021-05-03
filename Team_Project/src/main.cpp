@@ -8,7 +8,7 @@
 
 //*************************************
 // global constants
-static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
+static const char*	window_name = "Team project - Woori's Adventure";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
 static const char* triangle_obj = "../bin/mesh/Triangle.obj";

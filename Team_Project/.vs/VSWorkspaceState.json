@@ -2,8 +2,7 @@
   "ExpandedNodes": [
     "",
     "\\bin",
-    "\\bin\\mesh",
-    "\\bin\\mesh\\head",
+    "\\bin\\shaders",
     "\\src"
   ],
   "SelectedNode": "\\src\\main.cpp",

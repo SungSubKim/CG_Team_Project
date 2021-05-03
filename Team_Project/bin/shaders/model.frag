@@ -49,6 +49,4 @@ void main()
 	vec4 iKd=texture(TEX_SKY,tc);
 	//fragColor = phong( l, n, h, iKd );
 	fragColor=texture(TEX_SKY,tc);
-	
-	
 }
