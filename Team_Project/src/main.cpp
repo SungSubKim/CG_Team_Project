@@ -11,12 +11,12 @@
 static const char*	window_name = "Team project - Woori's Adventure";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char* triangle_obj = "../bin/mesh/Triangle.obj";
-static const char* character_obj = "../bin/mesh/MainCharacter.obj";
 static const char* sky_image_path = "../bin/images/skybox.jpeg"; //하늘 파일경로
-static const char* map_obj1 = "../bin/mesh/Map2_1.obj";
-static const char* map_obj2 = "../bin/mesh/Map2_2.obj";
-static const char* map_obj3 = "../bin/mesh/Map2_3.obj";
+//static const char* triangle_obj = "../bin/mesh/Triangle.obj";
+//static const char* character_obj = "../bin/mesh/MainCharacter.obj";
+//static const char* map_obj1 = "../bin/mesh/Map2_1.obj";
+//static const char* map_obj2 = "../bin/mesh/Map2_2.obj";
+//static const char* map_obj3 = "../bin/mesh/Map2_3.obj";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -401,8 +401,8 @@ bool user_init()
 	//텍스쳐 로딩
 	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
 
-	mat4 model_matrix_map1 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
-	mat4 model_matrix_map2 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
+	mat4 model_matrix_map1 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
+	mat4 model_matrix_map2 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);//맵의 모델 매트릭스
 	mat4 model_matrix_map3 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
 	mat4 model_matrix_sphere = mat4::scale(2); //sphere를 조종하는 model matrix
 	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale);
@@ -420,20 +420,6 @@ bool user_init()
 
 	if (!load_models())
 		return false;
-	//// load the mesh
-	//pMesh = load_model(triangle_obj);
-	//if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
-	//sMesh = load_model(sphere_obj);
-	//if (pMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
-
-	////bMesh = load_model(sphere_obj);
-	////if (bMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
-	//mapMesh2_1 = load_model(map_obj1);
-	//if (mapMesh2_1 == nullptr) { printf("Unable to load mesh\n"); return false; }
-	//mapMesh2_2 = load_model(map_obj2);
-	//if (mapMesh2_2 == nullptr) { printf("Unable to load mesh\n"); return false; }
-	//mapMesh2_3 = load_model(map_obj3);
-	//if (mapMesh2_3 == nullptr) { printf("Unable to load mesh\n"); return false; }
 
 	return true;
 }

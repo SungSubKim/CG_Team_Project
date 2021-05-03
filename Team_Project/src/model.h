@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #define DEFAULT_HIGHT 10.0
-#define MAP_X	95
+#define MAP_X	128
 #define MAP_Z	72
 struct model {
 	std::string path = "/";
