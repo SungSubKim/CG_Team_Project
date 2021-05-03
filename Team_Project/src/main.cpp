@@ -12,11 +12,6 @@ static const char*	window_name = "Team project - Woori's Adventure";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
 static const char* sky_image_path = "../bin/images/skybox.jpeg"; //하늘 파일경로
-//static const char* triangle_obj = "../bin/mesh/Triangle.obj";
-//static const char* character_obj = "../bin/mesh/MainCharacter.obj";
-//static const char* map_obj1 = "../bin/mesh/Map2_1.obj";
-//static const char* map_obj2 = "../bin/mesh/Map2_2.obj";
-//static const char* map_obj3 = "../bin/mesh/Map2_3.obj";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
