@@ -2,6 +2,7 @@
   "ExpandedNodes": [
     "",
     "\\bin",
+    "\\bin\\mesh",
     "\\bin\\shaders",
     "\\src"
   ],
