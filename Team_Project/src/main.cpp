@@ -102,6 +102,8 @@ void update()
 		s_center.z += (t - old_t) * rate;
 	old_t = t;
 	check_on_area();			
+	//old_s_center = s_center;
+	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model& m = getModelByName("sphere");
 	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
