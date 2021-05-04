@@ -15,6 +15,7 @@ out vec4 fragColor;
 
 // texture sampler
 uniform bool	sky;
+//sky변수의 추가 이것에 따라 어떤 값을 fragColor로 사용할지 결정
 uniform mat4	view_matrix;
 uniform sampler2D TEX_SKY;
 //uniform sampler2D TEX_MAP1;
@@ -51,4 +52,5 @@ void main()
 
 	if(sky) fragColor = iKd;
 	else fragColor = phong( l, n, h, iKd );
+	// TEX_SKY와 phong중 어느걸 사용할지를 sky에 따라 결정
 }

@@ -4,7 +4,7 @@
 #include "trackball.h"
 #include "assimp_loader.h"
 #include "model.h"
-//#include "circle.h"
+#include "area.h"
 
 //*************************************
 // global constants
@@ -46,11 +46,6 @@ struct material_t
 	float	shininess = 100000.0f;
 };
 
-//auto	circles = std::move(create_circles());
-//vec3 s_center = vec3(-62, 22 ,-35); // sphere의 시작지점
-mat4 model_matrix_sphere; //sphere를 조종하는 model matrix
-float scale = 1.0f;
-mat4 model_matrix_map = mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
 mat4 model_matrix_background=mat4::translate(0.0f,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
 
 // window objects
@@ -71,13 +66,11 @@ bool	show_texcoord = false;
 bool	b_wireframe = false;
 //*************************************
 // scene objects
-mesh2* pMesh = nullptr, * sMesh = nullptr, * bMesh=nullptr;
-mesh2* mapMesh2_1 = nullptr, * mapMesh2_2 = nullptr, * mapMesh2_3 = nullptr;
 
 camera		cam;
 trackball	tb;
-bool l = false, r = false, u = false, d = false;
-float old_t=0;
+bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
+float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -88,6 +81,7 @@ float min(float a, float b) {
 
 void update()
 {
+
 	glUseProgram(program);
 
 	// update projection matrix
@@ -97,10 +91,9 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	int rate = 50; if (deaccel_keys) rate /= 2;
-	if (l) {
+	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다.
+	if (l)
 		s_center.x -= (t - old_t) * rate;
-		//printf("%f\n",circles[0].center.y);
-	}
 	else if (r)
 		s_center.x += (t - old_t) * rate;
 	else if (u)
@@ -108,9 +101,12 @@ void update()
 	else if (d)
 		s_center.z += (t - old_t) * rate;
 	old_t = t;
-	check_on_area();
+	check_on_area();			
+	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model& m = getModelByName("sphere");
+	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
 	m.model_matrix = mat4::translate(s_center) * mat4::scale(vec3(0.4f));
+	//해당 character의 model matrix의 좌표정보를 입력해주고 0.4배 scale한다.
 
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
@@ -141,11 +137,16 @@ void render()
 	glUseProgram(program);
 
 	GLint uloc = glGetUniformLocation(program, "sky");
+	//텍스쳐 정보 전환을 위해 sky변수 호출
 	if (uloc > -1) glUniform1i(uloc, false);
+	//false를 넣어준다.
 	for (auto& model : models) {
+		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
 		if (!model.visible)
+			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
 			continue;
 		mesh2* pMesh = model.pMesh;
+		//메쉬포인터 지정하기, 이하 예전 코드와 동일
 		glBindVertexArray(pMesh->vertex_array);
 		GLint uloc = glGetUniformLocation(program, "model_matrix");
 		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model.model_matrix);
@@ -173,49 +174,18 @@ void render()
 			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 		}
 	}
-
+	// 가져온 모델의 렌더링의 끝
 
 	//printf("%lf\n", g.mat->textures.ambient.id);
 	uloc = glGetUniformLocation(program, "sky");
 	if (uloc > -1) glUniform1i(uloc, true);
+	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
 	glActiveTexture(GL_TEXTURE0); // 배경화면 그리기.
 	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
 	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);
 	glBindVertexArray(vertex_array);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	/*for (size_t k = 0, kn = bMesh->geometry_list.size(); k < kn; k++) {// 배경화면
-		geometry& g = bMesh->geometry_list[k];
-
-		if (g.mat->textures.diffuse) {
-			printf("asdf\n");
-			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-			glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
-			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-
-		}
-		else {
-			glUniform4fv(glGetUniformLocation(program, "ambient"), 0, (const float*)(&g.mat->ambient));
-			glUniform4fv(glGetUniformLocation(program, "diffuse"), 0, (const float*)(&g.mat->diffuse));
-			glUniform4fv(glGetUniformLocation(program, "specular"), 0, (const float*)(&g.mat->specular));
-			glUniform4fv(glGetUniformLocation(program, "emissive"), 0, (const float*)(&g.mat->emissive));
-			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
-			//printf("%lf \n", g.mat->diffuse.a);
-		}
-
-		//sMesh.
-		// render vertices: trigger shader programs to process vertex data
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bMesh->index_buffer);
-
-		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
-	}*/
-
-
-	// render vertices: trigger shader programs to process vertex data
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	//GLint uloc;
-
 
 	glfwSwapBuffers(window);
 }
@@ -251,6 +221,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (&m == &none)
 				printf("not found: triangle\n");
 			m.visible = !m.visible;
+			//Triangle의 표시여부를 조정한다.
 			show_texcoord = !show_texcoord;
 		}
 		else if (key == GLFW_KEY_D)
@@ -260,9 +231,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 			glFinish();
 			delete_texture_cache();
-			/*for (int i=0; i<3; i++)
-				delete pMesh[i];
-				pMesh = load_model(mesh_obj);*/
 		}
 #ifndef GL_ES_VERSION_2_0
 		else if (key == GLFW_KEY_W)
@@ -289,9 +257,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (&m == &none)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;
+			//map2_2, 다리부분의 표시유무를 조절한다.
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			deaccel_keys = 1;
+		// 속력 감소시키기 update에서 속력이 25로 감소한다.
 #endif
 	}
 	else if (action == GLFW_RELEASE) {
@@ -309,6 +279,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			deaccel_keys = 0;
+		//속력감소의 원상복귀
 	}
 }
 
@@ -398,9 +369,9 @@ bool user_init()
 
 	mat4 model_matrix_map1 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
 	mat4 model_matrix_map2 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);//맵의 모델 매트릭스
-	mat4 model_matrix_map3 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
+	mat4 model_matrix_map3 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
 	mat4 model_matrix_sphere = mat4::scale(2); //sphere를 조종하는 model matrix
-	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale);
+	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ;// 삼각형의 모델 매트릭스
 	// load the mesh
 	model triangle = { "../bin/mesh/Triangle.obj","triangle",model_matrix_triangle };
 	models.emplace_back(triangle);
@@ -412,8 +383,10 @@ bool user_init()
 	models.emplace_back(Map2_3);
 	model sphere = { "../bin/mesh/MainCharacter.obj","sphere",model_matrix_sphere };
 	models.emplace_back(sphere);
+	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 
 	if (!load_models())
+		//models에 저장된 모델들을 불러온다. 모델의 mesh pointer는 models의 model구조체에 저장된다.
 		return false;
 
 	return true;
@@ -422,7 +395,9 @@ bool user_init()
 void user_finalize()
 {
 	delete_texture_cache();
-	delete pMesh;
+	for (auto& model : models)
+		delete model.pMesh;
+	//모델들의 mesh pointer에 접근해서 자료 지우기
 }
 
 int main(int argc, char* argv[])
