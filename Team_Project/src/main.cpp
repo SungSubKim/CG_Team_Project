@@ -46,7 +46,7 @@ struct material_t
 	float	shininess = 100000.0f;
 };
 
-mat4 model_matrix_background=mat4::translate(0.0f,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
+mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
 
 // window objects
 GLFWwindow*	window = nullptr;
@@ -150,6 +150,7 @@ void render()
 		glBindVertexArray(pMesh->vertex_array);
 		GLint uloc = glGetUniformLocation(program, "model_matrix");
 		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model.model_matrix);
+		//각 모델의 model_matrix 불러와서 uniform으로 넘기기
 
 		for (size_t k = 0, kn = pMesh->geometry_list.size(); k < kn; k++) {
 			geometry& g = pMesh->geometry_list[k];
@@ -373,16 +374,11 @@ bool user_init()
 	mat4 model_matrix_sphere = mat4::scale(2); //sphere를 조종하는 model matrix
 	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ;// 삼각형의 모델 매트릭스
 	// load the mesh
-	model triangle = { "../bin/mesh/Triangle.obj","triangle",model_matrix_triangle };
-	models.emplace_back(triangle);
-	model Map2_1 = { "../bin/mesh/Map2_1.obj" ,"Map2_1",model_matrix_map1 };
-	models.emplace_back(Map2_1);
-	model Map2_2 = { "../bin/mesh/Map2_2.obj" ,"Map2_2",model_matrix_map2,false };
-	models.emplace_back(Map2_2);
-	model Map2_3 = { "../bin/mesh/Map2_3.obj" ,"Map2_3" ,model_matrix_map3 };
-	models.emplace_back(Map2_3);
-	model sphere = { "../bin/mesh/MainCharacter.obj","sphere",model_matrix_sphere };
-	models.emplace_back(sphere);
+	models.push_back({"../bin/mesh/Triangle.obj","triangle",model_matrix_triangle });
+	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",model_matrix_map1 });
+	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",model_matrix_map2,false });
+	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,model_matrix_map3 });
+	models.push_back({ "../bin/mesh/MainCharacter.obj","sphere",model_matrix_sphere });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 
 	if (!load_models())
