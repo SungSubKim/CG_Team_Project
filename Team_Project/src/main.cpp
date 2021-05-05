@@ -91,12 +91,20 @@ float min(float a, float b) {
 void rotate_chracter(float t, float old_t,float ntheta) {
 	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
 	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
-	//printf("%f %f\n", theta, theta0);
+	//printf("%f %f %f\n", theta, 2*PI, theta0);
 	if (l || r || u || d) {
 		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (0.01f < ntheta - theta) {
-			//ntheta가 더클때
-			if (ntheta - theta < PI)
+		if (abs(abs(ntheta - theta) - PI) < 0.05f) {
+			if (abs(theta - PI) < 0.05f || abs(theta - PI / 2 * 3) < 0.05f||
+				abs(theta)<0.05f)
+				theta += 10 * (t - old_t);
+			else //(theta<0.01f || 2*PI-theta<0.01f)
+				theta -= 10 * (t - old_t);
+		}
+		//좌<->우, 상<->하 이동시 일관성부여
+		else if (0.01f <ntheta - theta) {
+			//위에를 제외하고 ntheta가 더클때
+			if (abs(abs(ntheta - theta) - PI) <0.01f || ntheta - theta <= PI)
 				theta += 10 * (t - old_t);
 			//증가하는게 최선
 			else
@@ -104,6 +112,8 @@ void rotate_chracter(float t, float old_t,float ntheta) {
 			//감소하는게 최선
 		}
 		else if (theta - ntheta > 0.01f) {
+			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
+			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
 			if (theta - ntheta < PI)
 				theta -= 10 * (t - old_t); // * abs(ntheta - theta0);
 			else
