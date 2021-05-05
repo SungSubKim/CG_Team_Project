@@ -4,19 +4,16 @@
 #include "trackball.h"
 #include "assimp_loader.h"
 #include "model.h"
-//#include "circle.h"
+#include "area.h"
+#include "particle.h"
 
 //*************************************
 // global constants
 static const char*	window_name = "Team project - Woori's Adventure";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char* triangle_obj = "../bin/mesh/Triangle.obj";
-static const char* character_obj = "../bin/mesh/MainCharacter.obj";
-static const char* sky_image_path = "../bin/images/skybox.jpeg"; //하늘 파일경로
-static const char* map_obj1 = "../bin/mesh/Map2_1.obj";
-static const char* map_obj2 = "../bin/mesh/Map2_2.obj";
-static const char* map_obj3 = "../bin/mesh/Map2_3.obj";
+static const char* sky_image_path = "../bin/images/skybox.jpeg";
+static const char* snow_image_path = "../bin/images/snow-flake.png";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -37,7 +34,7 @@ struct camera
 
 struct light_t
 {
-	vec4	position = vec4(1.0f, 1.0f, 1.0f, 0.0f);   // directional light
+	vec4	position = vec4(10.0f, 10.0f, 10.0f, 0.0f);   // directional light
 	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -51,12 +48,7 @@ struct material_t
 	float	shininess = 100000.0f;
 };
 
-//auto	circles = std::move(create_circles());
-//vec3 s_center = vec3(-62, 22 ,-35); // sphere의 시작지점
-mat4 model_matrix_sphere; //sphere를 조종하는 model matrix
-float scale = 1.0f;
-mat4 model_matrix_map = mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
-mat4 model_matrix_background=mat4::translate(0.0f,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
+mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
 
 // window objects
 GLFWwindow*	window = nullptr;
@@ -68,21 +60,27 @@ GLuint	program	= 0;	// ID holder for GPU program
 GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
+GLuint	snow_vertex_array = 0;
 GLuint	TEX_SKY = 0;
+GLuint	SNOWTEX = 0;
+
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_wireframe = false;
+int		direc = 0;
+bool	b_space = false;
+std::vector<particle_t> particles;
+
 //*************************************
 // scene objects
-mesh2* pMesh = nullptr, * sMesh = nullptr, * bMesh=nullptr;
-mesh2* mapMesh2_1 = nullptr, * mapMesh2_2 = nullptr, * mapMesh2_3 = nullptr;
 
 camera		cam;
 trackball	tb;
-bool l = false, r = false, u = false, d = false;
-float old_t=0;
+bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
+float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
+float theta = 0,theta0=0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -90,9 +88,36 @@ material_t	material;
 float min(float a, float b) {
 	return a < b ? a : b;
 }
-
+void rotate_chracter(float t, float old_t,float ntheta) {
+	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
+	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
+	//printf("%f %f\n", theta, theta0);
+	if (l || r || u || d) {
+		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
+		if (0.01f < ntheta - theta) {
+			//ntheta가 더클때
+			if (ntheta - theta < PI)
+				theta += 10 * (t - old_t);
+			//증가하는게 최선
+			else
+				theta -= 10 * (t - old_t);
+			//감소하는게 최선
+		}
+		else if (theta - ntheta > 0.01f) {
+			if (theta - ntheta < PI)
+				theta -= 10 * (t - old_t); // * abs(ntheta - theta0);
+			else
+				theta += 10 * (t - old_t);// *abs(ntheta - theta0);
+		}
+	}
+	while (theta >= 2 * PI)
+		theta -= 2 * PI;
+	while (theta < 0)
+		theta += 2 * PI;
+}
 void update()
 {
+	
 	glUseProgram(program);
 
 	// update projection matrix
@@ -102,40 +127,63 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	int rate = 50; if (deaccel_keys) rate /= 2;
+	float ntheta=0;
+	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	if (l) {
 		s_center.x -= (t - old_t) * rate;
-		//printf("%f\n",circles[0].center.y);
+		ntheta = PI / 2*2;
+		direc = 1;
 	}
-	else if (r)
+	else if (r) {
 		s_center.x += (t - old_t) * rate;
-	else if (u)
+		ntheta = 0;
+		direc = 2;
+	}
+	else if (u){
 		s_center.z -= (t - old_t) * rate;
-	else if (d)
+		ntheta = PI / 2;
+		direc = 3;
+	}
+	else if (d){
 		s_center.z += (t - old_t) * rate;
+		ntheta = PI / 2*3;
+		direc = 4;
+	} 
+	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
-	check_on_area();
+	check_on_area();			
+	//old_s_center = s_center;
+	CopyMemory(old_s_center, s_center, sizeof(vec3));
+	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model& m = getModelByName("sphere");
-	m.model_matrix = mat4::translate(s_center) * mat4::scale(vec3(0.4f));
+	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
+	m.model_matrix = mat4::translate(s_center) *mat4::rotate(vec3(0,1,0),theta)*
+		mat4::scale(vec3(0.4f));
+	//해당 character의 model matrix의 좌표정보를 입력해주고 0.4배 scale한다.
 
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
 	uloc = glGetUniformLocation(program, "projection_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.projection_matrix);
-
+	
 	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
 	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
-
+	
 	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
 	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
-
+	
 	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
 	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
 	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
 									// select the texture slot to bind
+	for (auto& p : particles) {
+		p.update(s_center.x, s_center.z, b_space, direc);
+	}
+	b_space = false;
 }
 void render()
 {
@@ -144,16 +192,22 @@ void render()
 
 	// notify GL that we use our own program
 	glUseProgram(program);
-
-	GLint uloc = glGetUniformLocation(program, "sky");
-	if (uloc > -1) glUniform1i(uloc, false);
+	
+	GLint uloc;
+	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
+	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
+	//false를 넣어준다.
 	for (auto& model : models) {
+		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
 		if (!model.visible)
+			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
 			continue;
 		mesh2* pMesh = model.pMesh;
+		//메쉬포인터 지정하기, 이하 예전 코드와 동일
 		glBindVertexArray(pMesh->vertex_array);
 		GLint uloc = glGetUniformLocation(program, "model_matrix");
 		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model.model_matrix);
+		//각 모델의 model_matrix 불러와서 uniform으로 넘기기
 
 		for (size_t k = 0, kn = pMesh->geometry_list.size(); k < kn; k++) {
 			geometry& g = pMesh->geometry_list[k];
@@ -178,49 +232,40 @@ void render()
 			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 		}
 	}
-
+	// 가져온 모델의 렌더링의 끝
 
 	//printf("%lf\n", g.mat->textures.ambient.id);
-	uloc = glGetUniformLocation(program, "sky");
-	if (uloc > -1) glUniform1i(uloc, true);
+	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, true);
+	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
 	glActiveTexture(GL_TEXTURE0); // 배경화면 그리기.
 	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
 	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);
 	glBindVertexArray(vertex_array);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, false);
 
-	/*for (size_t k = 0, kn = bMesh->geometry_list.size(); k < kn; k++) {// 배경화면
-		geometry& g = bMesh->geometry_list[k];
+	glEnable(GL_BLEND);
+	for (auto& p : particles)
+	{
+		mat4 translate_matrix = mat4::translate(vec3(p.pos.x, 15.0f, p.pos.y));
+		mat4 scale_matrix = mat4::scale(p.scale);
+		mat4 model_matrix = translate_matrix * scale_matrix;
 
-		if (g.mat->textures.diffuse) {
-			printf("asdf\n");
-			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-			glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
-			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		glActiveTexture(GL_TEXTURE0);		// select the texture slot to bind
+		glBindTexture(GL_TEXTURE_2D, SNOWTEX);
+		glUniform1i(glGetUniformLocation(program, "TEX_SNOW"), 0);	 // GL_TEXTURE0
 
-		}
-		else {
-			glUniform4fv(glGetUniformLocation(program, "ambient"), 0, (const float*)(&g.mat->ambient));
-			glUniform4fv(glGetUniformLocation(program, "diffuse"), 0, (const float*)(&g.mat->diffuse));
-			glUniform4fv(glGetUniformLocation(program, "specular"), 0, (const float*)(&g.mat->specular));
-			glUniform4fv(glGetUniformLocation(program, "emissive"), 0, (const float*)(&g.mat->emissive));
-			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
-			//printf("%lf \n", g.mat->diffuse.a);
-		}
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "snow");			if (uloc > -1) glUniform1i(uloc, true);
+		uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
+		uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix);
 
-		//sMesh.
-		// render vertices: trigger shader programs to process vertex data
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bMesh->index_buffer);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
-	}*/
-
-
-	// render vertices: trigger shader programs to process vertex data
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	//GLint uloc;
-
+	}
+	glDisable(GL_BLEND);
+	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 
 	glfwSwapBuffers(window);
 }
@@ -256,6 +301,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (&m == &none)
 				printf("not found: triangle\n");
 			m.visible = !m.visible;
+			//Triangle의 표시여부를 조정한다.
 			show_texcoord = !show_texcoord;
 		}
 		else if (key == GLFW_KEY_D)
@@ -265,10 +311,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 			glFinish();
 			delete_texture_cache();
-			/*for (int i=0; i<3; i++)
-				delete pMesh[i];
-				pMesh = load_model(mesh_obj);*/
 		}
+		else if(key == GLFW_KEY_SPACE) b_space = true;
 #ifndef GL_ES_VERSION_2_0
 		else if (key == GLFW_KEY_W)
 		{
@@ -277,26 +321,28 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			l = true;
+			l = true; r = false; u = false; d = false;
 		}
 
 		else if (key == GLFW_KEY_RIGHT) {
-			r = true;
+			l = false; r = true; u = false; d = false;
 		}
 		else if (key == GLFW_KEY_UP) {
-			u = true;
+			l = false; r = false; u = true; d = false;
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			d = true;
+			l = false; r = false; u = false; d = true;
 		}
 		else if (key == GLFW_KEY_B) {
 			model& m = getModelByName("Map2_2");
 			if (&m == &none)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;
+			//map2_2, 다리부분의 표시유무를 조절한다.
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			deaccel_keys = 1;
+		// 속력 감소시키기 update에서 속력이 25로 감소한다.
 #endif
 	}
 	else if (action == GLFW_RELEASE) {
@@ -314,6 +360,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			deaccel_keys = 0;
+		//속력감소의 원상복귀
 	}
 }
 
@@ -381,6 +428,7 @@ bool user_init()
 	glEnable(GL_DEPTH_TEST);								// turn on depth tests
 	glEnable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	vertex corners[4];
 	corners[0].pos = vec3(-1.0f, -1.0f, 0.0f);	corners[0].tex = vec2(0.0f, 0.0f);
@@ -401,39 +449,41 @@ bool user_init()
 	//텍스쳐 로딩
 	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
 
-	mat4 model_matrix_map1 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
-	mat4 model_matrix_map2 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
-	mat4 model_matrix_map3 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale); //맵의 모델 매트릭스
+	mat4 model_matrix_map1 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
+	mat4 model_matrix_map2 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);//맵의 모델 매트릭스
+	mat4 model_matrix_map3 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
 	mat4 model_matrix_sphere = mat4::scale(2); //sphere를 조종하는 model matrix
-	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) * mat4::scale(scale, scale, scale);
+	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ;// 삼각형의 모델 매트릭스
 	// load the mesh
-	model triangle = { "../bin/mesh/Triangle.obj","triangle",model_matrix_triangle };
-	models.emplace_back(triangle);
-	model Map2_1 = { "../bin/mesh/Map2_1.obj" ,"Map2_1",model_matrix_map1 };
-	models.emplace_back(Map2_1);
-	model Map2_2 = { "../bin/mesh/Map2_2.obj" ,"Map2_2",model_matrix_map2,false };
-	models.emplace_back(Map2_2);
-	model Map2_3 = { "../bin/mesh/Map2_3.obj" ,"Map2_3" ,model_matrix_map3 };
-	models.emplace_back(Map2_3);
-	model sphere = { "../bin/mesh/MainCharacter.obj","sphere",model_matrix_sphere };
-	models.emplace_back(sphere);
+	models.push_back({"../bin/mesh/Triangle.obj","triangle",model_matrix_triangle });
+	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",model_matrix_map1 });
+	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",model_matrix_map2,false });
+	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,model_matrix_map3 });
+	models.push_back({ "../bin/mesh/MainCharacter.obj","sphere",model_matrix_sphere });
+	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 
 	if (!load_models())
+		//models에 저장된 모델들을 불러온다. 모델의 mesh pointer는 models의 model구조체에 저장된다.
 		return false;
-	//// load the mesh
-	//pMesh = load_model(triangle_obj);
-	//if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
-	//sMesh = load_model(sphere_obj);
-	//if (pMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
 
-	////bMesh = load_model(sphere_obj);
-	////if (bMesh == nullptr) { printf("Unable to load mesh\n"); return false; }
-	//mapMesh2_1 = load_model(map_obj1);
-	//if (mapMesh2_1 == nullptr) { printf("Unable to load mesh\n"); return false; }
-	//mapMesh2_2 = load_model(map_obj2);
-	//if (mapMesh2_2 == nullptr) { printf("Unable to load mesh\n"); return false; }
-	//mapMesh2_3 = load_model(map_obj3);
-	//if (mapMesh2_3 == nullptr) { printf("Unable to load mesh\n"); return false; }
+	static vertex snow_vertices[] = { {vec3(-1,-1,0),vec3(0,0,1),vec2(0,0)}, {vec3(1,-1,0),vec3(0,0,1),vec2(1,0)}, {vec3(-1,1,0),vec3(0,0,1),vec2(0,1)}, {vec3(1,1,0),vec3(0,0,1),vec2(1,1)} }; // strip ordering [0, 1, 3, 2]
+
+	// generation of vertex buffer: use snow_vertices as it is
+	GLuint snow_vertex_buffer;
+	glGenBuffers(1, &snow_vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, snow_vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * 4, &snow_vertices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (snow_vertex_array) glDeleteVertexArrays(1, &snow_vertex_array);
+	snow_vertex_array = cg_create_vertex_array(snow_vertex_buffer);
+	if (!snow_vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
+
+	// create a particle texture from image with alpha
+	SNOWTEX = cg_create_texture(snow_image_path, false); if (!SNOWTEX) return false; // disable mipmapping
+
+	// initialize particles
+	particles.resize(particle_t::MAX_PARTICLES);
 
 	return true;
 }
@@ -441,7 +491,9 @@ bool user_init()
 void user_finalize()
 {
 	delete_texture_cache();
-	delete pMesh;
+	for (auto& model : models)
+		delete model.pMesh;
+	//모델들의 mesh pointer에 접근해서 자료 지우기
 }
 
 int main(int argc, char* argv[])
