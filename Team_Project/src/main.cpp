@@ -71,7 +71,7 @@ camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
-float theta = 0;
+float theta = 0,theta0=0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -79,10 +79,36 @@ material_t	material;
 float min(float a, float b) {
 	return a < b ? a : b;
 }
-
+void rotate_chracter(float t, float old_t,float ntheta) {
+	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
+	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
+	//printf("%f %f\n", theta, theta0);
+	if (l || r || u || d) {
+		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
+		if (0.01f < ntheta - theta) {
+			//ntheta가 더클때
+			if (ntheta - theta < PI)
+				theta += 10 * (t - old_t);
+			//증가하는게 최선
+			else
+				theta -= 10 * (t - old_t);
+			//감소하는게 최선
+		}
+		else if (theta - ntheta > 0.01f) {
+			if (theta - ntheta < PI)
+				theta -= 10 * (t - old_t); // * abs(ntheta - theta0);
+			else
+				theta += 10 * (t - old_t);// *abs(ntheta - theta0);
+		}
+	}
+	while (theta >= 2 * PI)
+		theta -= 2 * PI;
+	while (theta < 0)
+		theta += 2 * PI;
+}
 void update()
 {
-
+	
 	glUseProgram(program);
 
 	// update projection matrix
@@ -92,23 +118,25 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	int rate = 50; if (deaccel_keys) rate /= 2;
+	float ntheta=0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	if (l) {
 		s_center.x -= (t - old_t) * rate;
-		theta = PI / 2*2;
+		ntheta = PI / 2*2;
 	}
 	else if (r) {
 		s_center.x += (t - old_t) * rate;
-		theta = PI / 2*4;
+		ntheta = 0;
 	}
 	else if (u){
 		s_center.z -= (t - old_t) * rate;
-		theta = PI / 2;
+		ntheta = PI / 2;
 	}
 	else if (d){
 		s_center.z += (t - old_t) * rate;
-		theta = PI / 2*3;
-	}
+		ntheta = PI / 2*3;
+	} 
+	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
 	check_on_area();			
 	//old_s_center = s_center;
@@ -253,17 +281,17 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			l = true;
+			l = true; r = false; u = false; d = false;
 		}
 
 		else if (key == GLFW_KEY_RIGHT) {
-			r = true;
+			l = false; r = true; u = false; d = false;
 		}
 		else if (key == GLFW_KEY_UP) {
-			u = true;
+			l = false; r = false; u = true; d = false;
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			d = true;
+			l = false; r = false; u = false; d = true;
 		}
 		else if (key == GLFW_KEY_B) {
 			model& m = getModelByName("Map2_2");
