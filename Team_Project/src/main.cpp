@@ -71,6 +71,7 @@ camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
+float theta = 0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -91,15 +92,23 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	int rate = 50; if (deaccel_keys) rate /= 2;
-	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다.
-	if (l)
+	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
+	if (l) {
 		s_center.x -= (t - old_t) * rate;
-	else if (r)
+		theta = PI / 2*2;
+	}
+	else if (r) {
 		s_center.x += (t - old_t) * rate;
-	else if (u)
+		theta = PI / 2*4;
+	}
+	else if (u){
 		s_center.z -= (t - old_t) * rate;
-	else if (d)
+		theta = PI / 2;
+	}
+	else if (d){
 		s_center.z += (t - old_t) * rate;
+		theta = PI / 2*3;
+	}
 	old_t = t;
 	check_on_area();			
 	//old_s_center = s_center;
@@ -107,7 +116,8 @@ void update()
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model& m = getModelByName("sphere");
 	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
-	m.model_matrix = mat4::translate(s_center) * mat4::scale(vec3(0.4f));
+	m.model_matrix = mat4::translate(s_center) *mat4::rotate(vec3(0,1,0),theta)*
+		mat4::scale(vec3(0.4f));
 	//해당 character의 model matrix의 좌표정보를 입력해주고 0.4배 scale한다.
 
 	// update uniform variables in vertex/fragment shaders
