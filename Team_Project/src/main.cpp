@@ -20,7 +20,7 @@ std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 // common structures
 struct camera
 {
-	vec3	eye = vec3(0 + MAP_X / 2, 100, 120 + MAP_Z / 2);
+	vec3	eye = vec3(0 + MAP_X / 2, 50, 120 + MAP_Z / 2);
 	vec3	at = vec3(-2 + MAP_X / 2, 0, 0 + MAP_Z / 2);
 	vec3	up = vec3(0, 1, 0);
 	mat4	view_matrix = mat4::look_at(eye, at, up);
@@ -469,7 +469,7 @@ bool user_init()
 	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",model_matrix_map1 });
 	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",model_matrix_map2,false });
 	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,model_matrix_map3 });
-	models.push_back({ "../bin/mesh/MainCharacter.obj","sphere",model_matrix_sphere });
+	models.push_back({ "../bin/mesh/Character.obj","sphere",model_matrix_sphere });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 
 	if (!load_models())
