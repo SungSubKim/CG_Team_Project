@@ -70,7 +70,7 @@ int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_wireframe = false;
 int		direc = 0;
-bool	b_space = false;
+bool	b_space = false, character_stop = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -97,27 +97,27 @@ void rotate_chracter(float t, float old_t,float ntheta) {
 		if (abs(abs(ntheta - theta) - PI) < 0.05f) {
 			if (abs(theta - PI) < 0.05f || abs(theta - PI / 2 * 3) < 0.05f||
 				abs(theta)<0.05f)
-				theta += 10 * (t - old_t);
+				theta += 80 * (t - old_t);
 			else //(theta<0.01f || 2*PI-theta<0.01f)
-				theta -= 10 * (t - old_t);
+				theta -= 80 * (t - old_t);
 		}
 		//좌<->우, 상<->하 이동시 일관성부여
 		else if (0.01f <ntheta - theta) {
 			//위에를 제외하고 ntheta가 더클때
 			if (abs(abs(ntheta - theta) - PI) <0.01f || ntheta - theta <= PI)
-				theta += 10 * (t - old_t);
+				theta += 80 * (t - old_t);
 			//증가하는게 최선
 			else
-				theta -= 10 * (t - old_t);
+				theta -= 80 * (t - old_t);
 			//감소하는게 최선
 		}
 		else if (theta - ntheta > 0.01f) {
 			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
 			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
 			if (theta - ntheta < PI)
-				theta -= 10 * (t - old_t); // * abs(ntheta - theta0);
+				theta -= 80 * (t - old_t); // * abs(ntheta - theta0);
 			else
-				theta += 10 * (t - old_t);// *abs(ntheta - theta0);
+				theta += 80 * (t - old_t);// *abs(ntheta - theta0);
 		}
 	}
 	while (theta >= 2 * PI)
@@ -137,25 +137,27 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	int rate = 50; if (deaccel_keys) rate /= 2;
-	float ntheta=0;
+	float ntheta=0, ds=0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
+	if (!character_stop)
+		ds = (t - old_t);
 	if (l) {
-		s_center.x -= (t - old_t) * rate;
+		s_center.x -= ds * rate;
 		ntheta = PI / 2*2;
 		direc = 1;
 	}
 	else if (r) {
-		s_center.x += (t - old_t) * rate;
+		s_center.x += ds * rate;
 		ntheta = 0;
 		direc = 2;
 	}
 	else if (u){
-		s_center.z -= (t - old_t) * rate;
+		s_center.z -= ds * rate;
 		ntheta = PI / 2;
 		direc = 3;
 	}
 	else if (d){
-		s_center.z += (t - old_t) * rate;
+		s_center.z += ds * rate;
 		ntheta = PI / 2*3;
 		direc = 4;
 	} 
@@ -322,7 +324,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if(key == GLFW_KEY_SPACE) b_space = true;
+		else if (key == GLFW_KEY_SPACE) b_space = true;
 #ifndef GL_ES_VERSION_2_0
 		else if (key == GLFW_KEY_W)
 		{
@@ -353,6 +355,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			deaccel_keys = 1;
 		// 속력 감소시키기 update에서 속력이 25로 감소한다.
+		else if (key == GLFW_KEY_LEFT_ALT)
+			character_stop = true;
 #endif
 	}
 	else if (action == GLFW_RELEASE) {
@@ -370,6 +374,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			deaccel_keys = 0;
+		else if (key == GLFW_KEY_LEFT_ALT)
+			character_stop = false;
 		//속력감소의 원상복귀
 	}
 }
