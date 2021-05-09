@@ -165,7 +165,7 @@ void update()
 	//old_s_center = s_center;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
-	model& m = getModelByName("sphere");
+	model& m = getModelByName("character");
 	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
 	m.model_matrix = mat4::translate(s_center) *mat4::rotate(vec3(0,1,0),theta)*
 		mat4::scale(vec3(0.4f));
@@ -472,7 +472,7 @@ bool user_init()
 		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2),false });
 	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,
 		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Character.obj","sphere",mat4::scale(2) });
+	models.push_back({ "../bin/mesh/Character.obj","character",mat4::scale(2) });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 	// model matrix의 정보도 바로 생성해서 삽입
 
