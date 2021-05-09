@@ -137,6 +137,9 @@ void update()
 	int rate = 50; if (deaccel_keys) rate /= 2;
 	float ntheta=0, ds=0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
+	model& model_character = getModelByName("Character");
+	vec3& s_center = model_character.center;
+	float &theta = model_character.theta;
 	if (!character_stop)
 		ds = (t - old_t);
 	if (l) {
@@ -165,11 +168,10 @@ void update()
 	//old_s_center = s_center;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
-	model& m = getModelByName("character");
+	model& m = getModelByName("Character");
 	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
-	m.model_matrix = mat4::translate(s_center) *mat4::rotate(vec3(0,1,0),theta)*
-		mat4::scale(vec3(0.4f));
-	//해당 character의 model matrix의 좌표정보를 입력해주고 0.4배 scale한다.
+	model_character.update_matrix();
+	//center와 theta의 정보를 매트릭스에 반영한다.
 
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
@@ -465,14 +467,21 @@ bool user_init()
 
 	// load the mesh
 	models.push_back({"../bin/mesh/Triangle.obj","triangle",
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2),false });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.back().visible = false;
 	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Character.obj","character",mat4::scale(2) });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Character.obj","Character",vec3(0),0.4f});
+	models.push_back({ "../bin/mesh/Enemy1.obj","Enemy1",
+		vec3(96,0,16), (0.5) });
+	models.push_back({ "../bin/mesh/Enemy2.obj","Enemy2",
+		vec3(16,0,16), (0.5) });
+	models.push_back({ "../bin/mesh/Enemy3.obj","Enemy3",
+		vec3(8,0,32),(0.5) });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 	// model matrix의 정보도 바로 생성해서 삽입
 
