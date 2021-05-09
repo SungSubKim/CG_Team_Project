@@ -123,6 +123,30 @@ void rotate_chracter(float t, float old_t,float ntheta) {
 	while (theta < 0)
 		theta += 2 * PI;
 }
+void setStage() {
+	printf("%d\n", stage);
+	switch (stage) {
+		case 1:
+			getModel("Map1").visible = true;
+			getModel("Map2_1").visible = false;
+			getModel("Map2_3").visible = false;
+			getModel("Map3").visible = false;
+			break;
+		case 2:
+			//printf("hi");
+			getModel("Map1").visible = false;
+			getModel("Map2_1").visible = true;
+			getModel("Map2_3").visible = true;
+			getModel("Map3").visible = false;
+			break;
+		default:
+			getModel("Map1").visible = false;
+			getModel("Map2_1").visible = false;
+			getModel("Map2_3").visible = false;
+			getModel("Map3").visible = true;
+			break;
+	}
+}
 void update()
 {
 	
@@ -164,8 +188,10 @@ void update()
 	} 
 	//rotate_chracter(t, old_t,ntheta);
 	old_t = t;
-	check_on_area();		
+	check_on_area(stage);		
 	check_to_enemy();
+	check_to_triangle();
+	setStage();
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model_character.update_matrix();
@@ -464,6 +490,8 @@ bool user_init()
 	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
 
 	// load the mesh
+	models.push_back({ "../bin/mesh/Map1.obj","Map1",
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({"../bin/mesh/Triangle.obj","triangle",
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",
@@ -472,6 +500,8 @@ bool user_init()
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.back().visible = false;
 	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map3.obj","Map3",
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Character.obj","Character",vec3(0),0.4f});
 	models.push_back({ "../bin/mesh/Enemy1.obj","Enemy1",
