@@ -41,7 +41,7 @@ std::vector<model> models;
 std::vector<model *> models_enemy, models_all_agent;
 //model들의 정보가 담긴 model struct의 vector이다.
 
-model& getModelByName(std::string name) {
+model& getModel(std::string name) {
 	// name값을 기준으로 맞는 model을 호출한다.
 	// 존재하지않으면 none이라는 model을 반환
 	model& res = none;

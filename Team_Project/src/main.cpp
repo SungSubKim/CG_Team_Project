@@ -137,7 +137,7 @@ void update()
 	int rate = 50; if (deaccel_keys) rate /= 2;
 	float ntheta=0, ds=0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
-	model& model_character = getModelByName("Character");
+	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
 	float &theta = model_character.theta;
 	if (!character_stop)
@@ -164,12 +164,10 @@ void update()
 	} 
 	//rotate_chracter(t, old_t,ntheta);
 	old_t = t;
-	check_on_area();			
-	//old_s_center = s_center;
+	check_on_area();		
+	check_to_enemy();
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
-	model& m = getModelByName("Character");
-	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
 	model_character.update_matrix();
 	//center와 theta의 정보를 매트릭스에 반영한다.
 
@@ -309,7 +307,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T) {
-			model& m = getModelByName("triangle");
+			model& m = getModel("triangle");
 			if (&m == &none)
 				printf("not found: triangle\n");
 			m.visible = !m.visible;
@@ -346,7 +344,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			l = false; r = false; u = false; d = true;
 		}
 		else if (key == GLFW_KEY_B) {
-			model& m = getModelByName("Map2_2");
+			model& m = getModel("Map2_2");
 			if (&m == &none)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;

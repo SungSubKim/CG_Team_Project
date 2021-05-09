@@ -20,6 +20,8 @@ std::vector<struct square> divided_map2_bridge = {
 //판을 사각형으로 나누어 입력하였다. land는 map2의 육지 bridge는 map2의 다리
 void check_on_area() {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
+	model& model_character = getModel("Character");
+	vec3& s_center = model_character.center;
 	bool onLand_old = false,onLand_now = false;
 	for (auto& s : divided_map2_land) {
 		if ((s.point.x <= old_s_center.x  && old_s_center.x <= s.point.x + s.x_length
@@ -61,4 +63,24 @@ void check_on_area() {
 	}
 	return;
 }
-//실제로 나가면 s_center값의 초기화가 이루어진다.
+//실제로 나가면 s_center값의 초기화가 이루어지거나, 아니면 육지를 못벗어나게한다.
+inline float xz_distance(vec3 a, vec3 b) {
+	return  pow((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z),0.5f);
+}
+void check_to_enemy() {
+	vec3& s_center = getModel("Character").center;
+
+	vec3& e_center1 = getModel("Enemy1").center;
+	vec3& e_center2 = getModel("Enemy2").center;
+	vec3& e_center3 = getModel("Enemy3").center;
+	/*printf("%f %f %f\n", xz_distance(e_center1, s_center), xz_distance(e_center2, s_center),
+		xz_distance(e_center3, s_center));*/
+	if (xz_distance(e_center1, s_center) < 5)
+		getModel("Enemy1").visible = false;
+	if (xz_distance(e_center2, s_center) < 5)
+		getModel("Enemy2").visible = false;
+	if (xz_distance(e_center3, s_center) < 5) {
+		//printf("hi\n");
+		getModel("Enemy3").visible = false;
+	}
+}
