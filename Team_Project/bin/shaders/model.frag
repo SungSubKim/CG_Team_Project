@@ -16,6 +16,7 @@ out vec4 fragColor;
 // texture sampler
 uniform bool	sky;
 uniform bool	snow;
+uniform int		mode;
 //sky변수의 추가 이것에 따라 어떤 값을 fragColor로 사용할지 결정
 uniform mat4	view_matrix;
 uniform sampler2D TEX_SKY;
@@ -23,6 +24,12 @@ uniform sampler2D TEX_SNOW;
 //uniform sampler2D TEX_MAP1;
 //uniform sampler2D TEX_MAP2;
 //uniform sampler2D TEX_MAP3;
+uniform sampler2D SKY_LEFT;
+uniform sampler2D SKY_DOWN;
+uniform sampler2D SKY_BACK;
+uniform sampler2D SKY_RIGHT;
+uniform sampler2D SKY_UP;
+uniform sampler2D SKY_FRONT;
 
 uniform bool use_texture;
 uniform vec4 ambient;
@@ -51,14 +58,32 @@ void main()
 	vec3 l = normalize(lpos.xyz-(lpos.a==0.0?vec3(0):p));	// lpos.a==0 means directional light
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l+v);	// the halfway vector
-	vec4 iKd = texture(TEX_SKY,tc);
-
-	if(sky) fragColor = iKd;	
-	else if(snow) {
+	vec4 iKd = texture(SKY_LEFT,tc);
+	
+	if(sky){
+		if(mode==1){
+			fragColor=texture(SKY_LEFT,tc);
+		}else if(mode==2){
+			fragColor=texture(SKY_DOWN,tc);
+		}else if(mode==3){
+			fragColor=texture(SKY_BACK,tc);
+		}else if(mode==4){
+			fragColor=texture(SKY_RIGHT,tc);
+		}else if(mode==5){
+			fragColor=texture(SKY_UP,tc);
+		}else if(mode==6){
+			fragColor=texture(SKY_FRONT,tc);
+		}
+	}else if(snow) {
 		fragColor = texture( TEX_SNOW, tc );
-		if(fragColor.a < 0.001) discard;
+		if(fragColor.a < 0.001) 
+			discard;
 		fragColor = vec4(fragColor.rgb,fragColor.r) * color; // enable alpha blending
 	}
 	else fragColor = phong( l, n, h, iKd );
+	
+	
+	
+	
 	// TEX_SKY와 phong중 어느걸 사용할지를 sky에 따라 결정
 }

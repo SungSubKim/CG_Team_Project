@@ -12,7 +12,12 @@
 static const char*	window_name = "Team project - Woori's Adventure";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char* sky_image_path = "../bin/images/skybox.jpeg";
+static const char* skybox_left_path = "../bin/images/negx.jpg";
+static const char* skybox_down_path = "../bin/images/negy.jpg";
+static const char* skybox_back_path = "../bin/images/negz.jpg";
+static const char* skybox_right_path = "../bin/images/posx.jpg";
+static const char* skybox_up_path = "../bin/images/posy.jpg";
+static const char* skybox_front_path = "../bin/images/posz.jpg";
 static const char* snow_image_path = "../bin/images/snow-flake.png";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
@@ -54,6 +59,11 @@ mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,
 GLFWwindow*	window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
 
+
+
+
+
+
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
@@ -62,8 +72,14 @@ GLuint index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
 GLuint	TEX_SKY = 0;
+GLuint	SKY_LEFT = 0;
+GLuint	SKY_DOWN = 0;
+GLuint	SKY_BACK = 0;
+GLuint	SKY_RIGHT = 0;
+GLuint	SKY_UP = 0;
+GLuint	SKY_FRONT = 0;
 GLuint	SNOWTEX = 0;
-
+GLuint	mode;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -84,6 +100,7 @@ float theta = 0,theta0=0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
+
 //*************************************
 float min(float a, float b) {
 	return a < b ? a : b;
@@ -170,7 +187,7 @@ void update()
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model_character.update_matrix();
 	//center와 theta의 정보를 매트릭스에 반영한다.
-
+	
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
@@ -185,11 +202,39 @@ void update()
 	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
+
 	
-	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
-	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
-									// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
+	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
+	
+
+	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
+	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
+	
+
+	glActiveTexture(GL_TEXTURE3);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
+	glUniform1i(glGetUniformLocation(program, "SKY_BACK"), 3);
+	
+	glActiveTexture(GL_TEXTURE4);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
+	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
+	
+
+	glActiveTexture(GL_TEXTURE5);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_UP);
+	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
+	
+
+	glActiveTexture(GL_TEXTURE6);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
+	glUniform1i(glGetUniformLocation(program, "SKY_FRONT"), 6);
+	
+	
+	
+	// select the texture slot to bind
 	for (auto& p : particles) {
 		p.update(s_center.x, s_center.z, b_space, direc);
 	}
@@ -206,6 +251,7 @@ void render()
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
+	mode = 0;
 	//false를 넣어준다.
 	for (auto& model : models) {
 		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
@@ -246,14 +292,57 @@ void render()
 
 	//printf("%lf\n", g.mat->textures.ambient.id);
 	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, true);
-	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
-	glActiveTexture(GL_TEXTURE0); // 배경화면 그리기.
-	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
-	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);
 	glBindVertexArray(vertex_array);
+	
+	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
+	model_matrix_background = mat4::translate(100,100,-250)*mat4::scale(300.0f, 300.0f, 100.0f); 
+	//front
+	mode = 6;
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, false);
+
+	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
+	//back
+	
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 3;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(-200, 100, 50)* mat4::rotate(vec3(0,1,0),PI/2)* mat4::scale(300.0f, 300.0f, 100.0f);
+	//left
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 1;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(400, 100, 50) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	//right
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 4;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1,0,0),-PI/2)*mat4::scale(300.0f, 300.0f, 100.0f);
+	//down
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 2;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(100, 400, 50) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	//up
+	
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 5;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	mode = 0;
+	//uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, false);
 
 	glEnable(GL_BLEND);
 	for (auto& p : particles)
@@ -270,7 +359,7 @@ void render()
 		uloc = glGetUniformLocation(program, "snow");			if (uloc > -1) glUniform1i(uloc, true);
 		uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
 		uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix);
-
+		
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	}
@@ -461,7 +550,13 @@ bool user_init()
 	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
 
 	//텍스쳐 로딩
-	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
+	
+	SKY_LEFT = create_texture(skybox_left_path, true); if (!SKY_LEFT) return false;
+	SKY_DOWN = create_texture(skybox_down_path, true); if (!SKY_DOWN) return false;
+	SKY_BACK = create_texture(skybox_back_path, true); if (!SKY_BACK) return false;
+	SKY_RIGHT = create_texture(skybox_right_path, true); if (!SKY_RIGHT) return false;
+	SKY_UP = create_texture(skybox_up_path, true); if (!SKY_UP) return false;
+	SKY_FRONT = create_texture(skybox_front_path, true); if (!SKY_FRONT) return false;
 
 	// load the mesh
 	models.push_back({"../bin/mesh/Triangle.obj","triangle",
