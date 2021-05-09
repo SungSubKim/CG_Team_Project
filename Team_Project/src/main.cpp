@@ -463,18 +463,18 @@ bool user_init()
 	//텍스쳐 로딩
 	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
 
-	mat4 model_matrix_map1 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
-	mat4 model_matrix_map2 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);//맵의 모델 매트릭스
-	mat4 model_matrix_map3 = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ; //맵의 모델 매트릭스
-	mat4 model_matrix_sphere = mat4::scale(2); //sphere를 조종하는 model matrix
-	mat4 model_matrix_triangle = mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) ;// 삼각형의 모델 매트릭스
 	// load the mesh
-	models.push_back({"../bin/mesh/Triangle.obj","triangle",model_matrix_triangle });
-	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",model_matrix_map1 });
-	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",model_matrix_map2,false });
-	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,model_matrix_map3 });
-	models.push_back({ "../bin/mesh/Character.obj","sphere",model_matrix_sphere });
+	models.push_back({"../bin/mesh/Triangle.obj","triangle",
+		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",
+		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",
+		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2),false });
+	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,
+		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Character.obj","sphere",mat4::scale(2) });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
+	// model matrix의 정보도 바로 생성해서 삽입
 
 	if (!load_models())
 		//models에 저장된 모델들을 불러온다. 모델의 mesh pointer는 models의 model구조체에 저장된다.
