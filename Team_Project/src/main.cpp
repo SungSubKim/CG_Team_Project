@@ -112,8 +112,6 @@ void rotate_chracter(float t, float old_t,float ntheta) {
 			//감소하는게 최선
 		}
 		else if (theta - ntheta > 0.01f) {
-			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
-			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
 			if (theta - ntheta < PI)
 				theta -= 80 * (t - old_t); // * abs(ntheta - theta0);
 			else
@@ -143,25 +141,25 @@ void update()
 		ds = (t - old_t);
 	if (l) {
 		s_center.x -= ds * rate;
-		ntheta = PI / 2*2;
+		theta = PI / 2*2;
 		direc = 1;
 	}
 	else if (r) {
 		s_center.x += ds * rate;
-		ntheta = 0;
+		theta = 0;
 		direc = 2;
 	}
 	else if (u){
 		s_center.z -= ds * rate;
-		ntheta = PI / 2;
+		theta = PI / 2;
 		direc = 3;
 	}
 	else if (d){
 		s_center.z += ds * rate;
-		ntheta = PI / 2*3;
+		theta = PI / 2*3;
 		direc = 4;
 	} 
-	rotate_chracter(t, old_t,ntheta);
+	//rotate_chracter(t, old_t,ntheta);
 	old_t = t;
 	check_on_area();			
 	//old_s_center = s_center;
