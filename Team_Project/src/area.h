@@ -93,8 +93,8 @@ void check_to_triangle() {
 	vec3& t_center = getModel("triangle").center;
 	/*printf("%f %f %f\n", xz_distance(e_center1, s_center), xz_distance(e_center2, s_center),
 		xz_distance(e_center3, s_center));*/
-	printf("%f %f %f\n", xz_distance(t_center, s_center),s_center.x,s_center.z);
-	if (stage ==2 && xz_distance(vec3(116, 0, 42), s_center) < 5) {
+	//printf("%f	%f	%f\n", s_center.x,s_center.z, xz_distance(t_center, s_center));
+	if (stage ==2 && xz_distance(vec3(120, 0, 35), s_center) < 7) {
 		stage = 3;
 		s_center = vec3(0);
 		getModel("triangle").visible = false;
