@@ -124,7 +124,7 @@ void rotate_chracter(float t, float old_t,float ntheta) {
 		theta += 2 * PI;
 }
 void setStage() {
-	printf("%d\n", stage);
+	//printf("%d\n", stage);
 	switch (stage) {
 		case 1:
 			getModel("Map1").visible = true;
