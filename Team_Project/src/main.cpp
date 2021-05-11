@@ -88,6 +88,7 @@ bool	b_wireframe = false;
 int		direc = 0;
 bool	b_space = false, character_stop = false;
 std::vector<particle_t> particles;
+int stage = 2;
 
 //*************************************
 // scene objects
@@ -147,30 +148,6 @@ void rotate_chracter(float t, float old_t, float ntheta) {
 	while (theta < 0)
 		theta += 2 * PI;
 }
-void setStage() {
-	//printf("%d\n", stage);
-	switch (stage) {
-		case 1:
-			getModel("Map1").visible = true;
-			getModel("Map2_1").visible = false;
-			getModel("Map2_3").visible = false;
-			getModel("Map3").visible = false;
-			break;
-		case 2:
-			//printf("hi");
-			getModel("Map1").visible = false;
-			getModel("Map2_1").visible = true;
-			getModel("Map2_3").visible = true;
-			getModel("Map3").visible = false;
-			break;
-		default:
-			getModel("Map1").visible = false;
-			getModel("Map2_1").visible = false;
-			getModel("Map2_3").visible = false;
-			getModel("Map3").visible = true;
-			break;
-	}
-}
 void update()
 {
 	
@@ -211,10 +188,19 @@ void update()
 	} 
 	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
-	check_on_area(stage);		
-	check_to_enemy();
-	check_to_triangle();
-	setStage();
+	switch (stage) {
+		case 2:
+			check_map2();
+			check_to_enemy();
+			stage = getTriangle();
+			break;
+		case 3:
+			check_map3();
+		default:
+			break;
+	}
+	
+	setStage(stage);
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
 	model_character.update_matrix();
