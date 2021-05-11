@@ -12,7 +12,12 @@
 static const char*	window_name = "Team project - Woori's Adventure";
 static const char*	vert_shader_path = "../bin/shaders/model.vert";
 static const char*	frag_shader_path = "../bin/shaders/model.frag";
-static const char* sky_image_path = "../bin/images/skybox.jpeg";
+static const char* skybox_left_path = "../bin/images/negx.jpg";
+static const char* skybox_down_path = "../bin/images/negy.jpg";
+static const char* skybox_back_path = "../bin/images/negz.jpg";
+static const char* skybox_right_path = "../bin/images/posx.jpg";
+static const char* skybox_up_path = "../bin/images/posy.jpg";
+static const char* skybox_front_path = "../bin/images/posz.jpg";
 static const char* snow_image_path = "../bin/images/snow-flake.png";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
@@ -20,7 +25,7 @@ std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 // common structures
 struct camera
 {
-	vec3	eye = vec3(0 + MAP_X / 2, 50, 120 + MAP_Z / 2);
+	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
 	vec3	at = vec3(-2 + MAP_X / 2, 0, 0 + MAP_Z / 2);
 	vec3	up = vec3(0, 1, 0);
 	mat4	view_matrix = mat4::look_at(eye, at, up);
@@ -54,6 +59,11 @@ mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,
 GLFWwindow*	window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
 
+
+
+
+
+
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
@@ -62,8 +72,14 @@ GLuint index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
 GLuint	TEX_SKY = 0;
+GLuint	SKY_LEFT = 0;
+GLuint	SKY_DOWN = 0;
+GLuint	SKY_BACK = 0;
+GLuint	SKY_RIGHT = 0;
+GLuint	SKY_UP = 0;
+GLuint	SKY_FRONT = 0;
 GLuint	SNOWTEX = 0;
-
+GLuint	mode;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -80,48 +96,80 @@ camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
-float theta = 0,theta0=0;
+float theta0=0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
+
 //*************************************
 float min(float a, float b) {
 	return a < b ? a : b;
 }
-void rotate_chracter(float t, float old_t,float ntheta) {
+	//float& theta = getModel("Character").theta;
+void rotate_chracter(float t, float old_t, float ntheta) {
 	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
 	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
 	//printf("%f %f %f\n", theta, 2*PI, theta0);
+	float& theta = getModel("Character").theta;
+	int vel = 5;
 	if (l || r || u || d) {
 		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (abs(abs(ntheta - theta) - PI) < 0.05f) {
-			if (abs(theta - PI) < 0.05f || abs(theta - PI / 2 * 3) < 0.05f||
-				abs(theta)<0.05f)
-				theta += 80 * (t - old_t);
+		if (abs(theta-ntheta) < 0.2f)
+			theta = ntheta;
+		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
+			if (abs(theta - PI) < 0.01f || abs(theta - PI / 2 * 3) < 0.01f ||
+				abs(theta) < 0.01f)
+				theta += vel * (t - old_t);
 			else //(theta<0.01f || 2*PI-theta<0.01f)
-				theta -= 80 * (t - old_t);
+				theta -= vel * (t - old_t);
 		}
 		//좌<->우, 상<->하 이동시 일관성부여
-		else if (0.01f <ntheta - theta) {
+		else if (theta < ntheta ) {
 			//위에를 제외하고 ntheta가 더클때
-			if (abs(abs(ntheta - theta) - PI) <0.01f || ntheta - theta <= PI)
-				theta += 80 * (t - old_t);
+			if (abs(abs(ntheta - theta) - PI) < 0.01f || ntheta - theta <= PI)
+				theta += vel * (t - old_t);
 			//증가하는게 최선
 			else
-				theta -= 80 * (t - old_t);
+				theta -= vel * (t - old_t);
 			//감소하는게 최선
 		}
-		else if (theta - ntheta > 0.01f) {
+		else if (theta >ntheta) {
+			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
+			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
 			if (theta - ntheta < PI)
-				theta -= 80 * (t - old_t); // * abs(ntheta - theta0);
+				theta -= vel * (t - old_t); // * abs(ntheta - theta0);
 			else
-				theta += 80 * (t - old_t);// *abs(ntheta - theta0);
+				theta += vel * (t - old_t);// *abs(ntheta - theta0);
 		}
 	}
 	while (theta >= 2 * PI)
 		theta -= 2 * PI;
 	while (theta < 0)
 		theta += 2 * PI;
+}
+void setStage() {
+	//printf("%d\n", stage);
+	switch (stage) {
+		case 1:
+			getModel("Map1").visible = true;
+			getModel("Map2_1").visible = false;
+			getModel("Map2_3").visible = false;
+			getModel("Map3").visible = false;
+			break;
+		case 2:
+			//printf("hi");
+			getModel("Map1").visible = false;
+			getModel("Map2_1").visible = true;
+			getModel("Map2_3").visible = true;
+			getModel("Map3").visible = false;
+			break;
+		default:
+			getModel("Map1").visible = false;
+			getModel("Map2_1").visible = false;
+			getModel("Map2_3").visible = false;
+			getModel("Map3").visible = true;
+			break;
+	}
 }
 void update()
 {
@@ -134,43 +182,44 @@ void update()
 
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
-	int rate = 50; if (deaccel_keys) rate /= 2;
+	int rate = 20; if (accel) rate *= 2;
 	float ntheta=0, ds=0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
+	model& model_character = getModel("Character");
+	vec3& s_center = model_character.center;
 	if (!character_stop)
 		ds = (t - old_t);
 	if (l) {
 		s_center.x -= ds * rate;
-		theta = PI / 2*2;
+		ntheta = PI / 2*2;
 		direc = 1;
 	}
 	else if (r) {
 		s_center.x += ds * rate;
-		theta = 0;
+		ntheta = 0;
 		direc = 2;
 	}
 	else if (u){
 		s_center.z -= ds * rate;
-		theta = PI / 2;
+		ntheta = PI / 2;
 		direc = 3;
 	}
 	else if (d){
 		s_center.z += ds * rate;
-		theta = PI / 2*3;
+		ntheta = PI / 2*3;
 		direc = 4;
 	} 
-	//rotate_chracter(t, old_t,ntheta);
+	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
-	check_on_area();			
-	//old_s_center = s_center;
+	check_on_area(stage);		
+	check_to_enemy();
+	check_to_triangle();
+	setStage();
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
-	model& m = getModelByName("character");
-	// model.h의 models중에 이름이 sphere인 것을 찾아온다.(main character)
-	m.model_matrix = mat4::translate(s_center) *mat4::rotate(vec3(0,1,0),theta)*
-		mat4::scale(vec3(0.4f));
-	//해당 character의 model matrix의 좌표정보를 입력해주고 0.4배 scale한다.
-
+	model_character.update_matrix();
+	//center와 theta의 정보를 매트릭스에 반영한다.
+	
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
@@ -185,11 +234,39 @@ void update()
 	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
+
 	
-	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
-	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);	 // GL_TEXTURE0
-									// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
+	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
+	
+
+	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
+	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
+	
+
+	glActiveTexture(GL_TEXTURE3);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
+	glUniform1i(glGetUniformLocation(program, "SKY_BACK"), 3);
+	
+	glActiveTexture(GL_TEXTURE4);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
+	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
+	
+
+	glActiveTexture(GL_TEXTURE5);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_UP);
+	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
+	
+
+	glActiveTexture(GL_TEXTURE6);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
+	glUniform1i(glGetUniformLocation(program, "SKY_FRONT"), 6);
+	
+	
+	
+	// select the texture slot to bind
 	for (auto& p : particles) {
 		p.update(s_center.x, s_center.z, b_space, direc);
 	}
@@ -206,6 +283,7 @@ void render()
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
+	mode = 0;
 	//false를 넣어준다.
 	for (auto& model : models) {
 		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
@@ -246,13 +324,56 @@ void render()
 
 	//printf("%lf\n", g.mat->textures.ambient.id);
 	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, true);
-	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
-	glActiveTexture(GL_TEXTURE0); // 배경화면 그리기.
-	glBindTexture(GL_TEXTURE_2D, TEX_SKY);
-	glUniform1i(glGetUniformLocation(program, "TEX_SKY"), 0);
 	glBindVertexArray(vertex_array);
+	
+	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
+	model_matrix_background = mat4::translate(100,100,-250)*mat4::scale(300.0f, 300.0f, 100.0f); 
+	//front
+	mode = 6;
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
+	//back
+	
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 3;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(-200, 100, 50)* mat4::rotate(vec3(0,1,0),PI/2)* mat4::scale(300.0f, 300.0f, 100.0f);
+	//left
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 1;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(400, 100, 50) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	//right
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 4;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1,0,0),-PI/2)*mat4::scale(300.0f, 300.0f, 100.0f);
+	//down
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 2;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model_matrix_background = mat4::translate(100, 400, 50) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	//up
+	
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	mode = 5;
+	glUniform1i(glGetUniformLocation(program, "mode"), mode);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	mode = 0;
 	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, false);
 
 	glEnable(GL_BLEND);
@@ -270,7 +391,7 @@ void render()
 		uloc = glGetUniformLocation(program, "snow");			if (uloc > -1) glUniform1i(uloc, true);
 		uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
 		uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix);
-
+		
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	}
@@ -307,7 +428,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T) {
-			model& m = getModelByName("triangle");
+			model& m = getModel("triangle");
 			if (&m == &none)
 				printf("not found: triangle\n");
 			m.visible = !m.visible;
@@ -344,14 +465,14 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			l = false; r = false; u = false; d = true;
 		}
 		else if (key == GLFW_KEY_B) {
-			model& m = getModelByName("Map2_2");
+			model& m = getModel("Map2_2");
 			if (&m == &none)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;
 			//map2_2, 다리부분의 표시유무를 조절한다.
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
-			deaccel_keys = 1;
+			accel = 1;
 		// 속력 감소시키기 update에서 속력이 25로 감소한다.
 		else if (key == GLFW_KEY_LEFT_ALT)
 			character_stop = true;
@@ -371,7 +492,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			d = false;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
-			deaccel_keys = 0;
+			accel = 0;
 		else if (key == GLFW_KEY_LEFT_ALT)
 			character_stop = false;
 		//속력감소의 원상복귀
@@ -461,18 +582,35 @@ bool user_init()
 	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
 
 	//텍스쳐 로딩
-	TEX_SKY = create_texture(sky_image_path, true); if (!TEX_SKY) return false;
+	
+	SKY_LEFT = create_texture(skybox_left_path, true); if (!SKY_LEFT) return false;
+	SKY_DOWN = create_texture(skybox_down_path, true); if (!SKY_DOWN) return false;
+	SKY_BACK = create_texture(skybox_back_path, true); if (!SKY_BACK) return false;
+	SKY_RIGHT = create_texture(skybox_right_path, true); if (!SKY_RIGHT) return false;
+	SKY_UP = create_texture(skybox_up_path, true); if (!SKY_UP) return false;
+	SKY_FRONT = create_texture(skybox_front_path, true); if (!SKY_FRONT) return false;
 
 	// load the mesh
+	models.push_back({ "../bin/mesh/Map1.obj","Map1",
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({"../bin/mesh/Triangle.obj","triangle",
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2),false });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.back().visible = false;
 	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,
-		mat4::translate(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Character.obj","character",mat4::scale(2) });
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map3.obj","Map3",
+		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Character.obj","Character",vec3(0),0.4f});
+	models.push_back({ "../bin/mesh/Enemy1.obj","Enemy1",
+		vec3(96,0,16), (0.5) });
+	models.push_back({ "../bin/mesh/Enemy2.obj","Enemy2",
+		vec3(16,0,16), (0.5) });
+	models.push_back({ "../bin/mesh/Enemy3.obj","Enemy3",
+		vec3(8,0,32),(0.5) });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 	// model matrix의 정보도 바로 생성해서 삽입
 
