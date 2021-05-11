@@ -88,6 +88,7 @@ bool	b_wireframe = false;
 int		direc = 0;
 bool	b_space = false, character_stop = false;
 std::vector<particle_t> particles;
+int stage = 1, enemy_num=3;
 
 //*************************************
 // scene objects
@@ -147,30 +148,6 @@ void rotate_chracter(float t, float old_t, float ntheta) {
 	while (theta < 0)
 		theta += 2 * PI;
 }
-void setStage() {
-	//printf("%d\n", stage);
-	switch (stage) {
-		case 1:
-			getModel("Map1").visible = true;
-			getModel("Map2_1").visible = false;
-			getModel("Map2_3").visible = false;
-			getModel("Map3").visible = false;
-			break;
-		case 2:
-			//printf("hi");
-			getModel("Map1").visible = false;
-			getModel("Map2_1").visible = true;
-			getModel("Map2_3").visible = true;
-			getModel("Map3").visible = false;
-			break;
-		default:
-			getModel("Map1").visible = false;
-			getModel("Map2_1").visible = false;
-			getModel("Map2_3").visible = false;
-			getModel("Map3").visible = true;
-			break;
-	}
-}
 void update()
 {
 	
@@ -184,6 +161,7 @@ void update()
 	float t = float(glfwGetTime());
 	int rate = 20; if (accel) rate *= 2;
 	float ntheta=0, ds=0;
+	static bool b_triangle = false;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -211,14 +189,29 @@ void update()
 	} 
 	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
-	check_on_area(stage);		
-	check_to_enemy();
-	check_to_triangle();
-	setStage();
+	switch (stage) {
+		case 1:
+			check_map1();
+			enemy_num = check_to_enemy();
+			break;
+		case 2:
+			check_map2();
+			enemy_num = check_to_enemy();
+			b_triangle = getTriangle();
+			break;
+		case 3:
+			check_map3();
+		default:
+			break;
+	}
+	if ((stage == 1 && enemy_num == 0 )||(stage == 2 && b_triangle))
+		stage++;
+	//stage clear조건
+	setStage(stage);
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
-	// Map2의 다리위에 올라가 있는지를 체크, 이게 아니면 s_center의 xz값을 원래대로 되돌린다.
+	// old_s_center의 값을 준비하여 backtracking을 준비
 	model_character.update_matrix();
-	//center와 theta의 정보를 매트릭스에 반영한다.
+	//center와 theta의 정보를 캐릭터매트릭스에 반영한다.
 	
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
@@ -397,7 +390,7 @@ void render()
 	}
 	glDisable(GL_BLEND);
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
-
+	
 	glfwSwapBuffers(window);
 }
 
@@ -434,6 +427,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			m.visible = !m.visible;
 			//Triangle의 표시여부를 조정한다.
 			show_texcoord = !show_texcoord;
+		}
+		else if (key == GLFW_KEY_C) {
+			model& m = getModel("Character");
+			printf("%f %f %f\n", m.center.x,m.center.z,m.center.y);
 		}
 		else if (key == GLFW_KEY_D)
 		{
@@ -595,6 +592,7 @@ bool user_init()
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({"../bin/mesh/Triangle.obj","triangle",
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.back().visible = false;
 	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",
@@ -617,6 +615,8 @@ bool user_init()
 	if (!load_models())
 		//models에 저장된 모델들을 불러온다. 모델의 mesh pointer는 models의 model구조체에 저장된다.
 		return false;
+
+	getModel("Character").center = vec3(2.3f, 0, 20);
 
 	static vertex snow_vertices[] = { {vec3(-1,-1,0),vec3(0,0,1),vec2(0,0)}, {vec3(1,-1,0),vec3(0,0,1),vec2(1,0)}, {vec3(-1,1,0),vec3(0,0,1),vec2(0,1)}, {vec3(1,1,0),vec3(0,0,1),vec2(1,1)} }; // strip ordering [0, 1, 3, 2]
 
