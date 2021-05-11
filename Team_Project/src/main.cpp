@@ -25,7 +25,7 @@ std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 // common structures
 struct camera
 {
-	vec3	eye = vec3(0 + MAP_X / 2, 50, 120 + MAP_Z / 2);
+	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
 	vec3	at = vec3(-2 + MAP_X / 2, 0, 0 + MAP_Z / 2);
 	vec3	up = vec3(0, 1, 0);
 	mat4	view_matrix = mat4::look_at(eye, at, up);
@@ -96,7 +96,7 @@ camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
-float theta = 0,theta0=0;
+float theta0=0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -105,34 +105,41 @@ material_t	material;
 float min(float a, float b) {
 	return a < b ? a : b;
 }
-void rotate_chracter(float t, float old_t,float ntheta) {
+	//float& theta = getModel("Character").theta;
+void rotate_chracter(float t, float old_t, float ntheta) {
 	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
 	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
 	//printf("%f %f %f\n", theta, 2*PI, theta0);
+	float& theta = getModel("Character").theta;
+	int vel = 5;
 	if (l || r || u || d) {
 		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (abs(abs(ntheta - theta) - PI) < 0.05f) {
-			if (abs(theta - PI) < 0.05f || abs(theta - PI / 2 * 3) < 0.05f||
-				abs(theta)<0.05f)
-				theta += 80 * (t - old_t);
+		if (abs(theta-ntheta) < 0.1f)
+			theta = ntheta;
+		else if (abs(abs(ntheta - theta) - PI) < 0.05f) {
+			if (abs(theta - PI) < 0.05f || abs(theta - PI / 2 * 3) < 0.05f ||
+				abs(theta) < 0.05f)
+				theta += vel * (t - old_t);
 			else //(theta<0.01f || 2*PI-theta<0.01f)
-				theta -= 80 * (t - old_t);
+				theta -= vel * (t - old_t);
 		}
 		//좌<->우, 상<->하 이동시 일관성부여
-		else if (0.01f <ntheta - theta) {
+		else if (theta < ntheta ) {
 			//위에를 제외하고 ntheta가 더클때
-			if (abs(abs(ntheta - theta) - PI) <0.01f || ntheta - theta <= PI)
-				theta += 80 * (t - old_t);
+			if (abs(abs(ntheta - theta) - PI) < 0.01f || ntheta - theta <= PI)
+				theta += vel * (t - old_t);
 			//증가하는게 최선
 			else
-				theta -= 80 * (t - old_t);
+				theta -= vel * (t - old_t);
 			//감소하는게 최선
 		}
-		else if (theta - ntheta > 0.01f) {
+		else if (theta >ntheta) {
+			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
+			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
 			if (theta - ntheta < PI)
-				theta -= 80 * (t - old_t); // * abs(ntheta - theta0);
+				theta -= vel * (t - old_t); // * abs(ntheta - theta0);
 			else
-				theta += 80 * (t - old_t);// *abs(ntheta - theta0);
+				theta += vel * (t - old_t);// *abs(ntheta - theta0);
 		}
 	}
 	while (theta >= 2 * PI)
@@ -175,35 +182,34 @@ void update()
 
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
-	int rate = 50; if (deaccel_keys) rate /= 2;
+	int rate = 20; if (accel) rate *= 2;
 	float ntheta=0, ds=0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
-	float &theta = model_character.theta;
 	if (!character_stop)
 		ds = (t - old_t);
 	if (l) {
 		s_center.x -= ds * rate;
-		theta = PI / 2*2;
+		ntheta = PI / 2*2;
 		direc = 1;
 	}
 	else if (r) {
 		s_center.x += ds * rate;
-		theta = 0;
+		ntheta = 0;
 		direc = 2;
 	}
 	else if (u){
 		s_center.z -= ds * rate;
-		theta = PI / 2;
+		ntheta = PI / 2;
 		direc = 3;
 	}
 	else if (d){
 		s_center.z += ds * rate;
-		theta = PI / 2*3;
+		ntheta = PI / 2*3;
 		direc = 4;
 	} 
-	//rotate_chracter(t, old_t,ntheta);
+	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
 	check_on_area(stage);		
 	check_to_enemy();
@@ -466,7 +472,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			//map2_2, 다리부분의 표시유무를 조절한다.
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
-			deaccel_keys = 1;
+			accel = 1;
 		// 속력 감소시키기 update에서 속력이 25로 감소한다.
 		else if (key == GLFW_KEY_LEFT_ALT)
 			character_stop = true;
@@ -486,7 +492,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			d = false;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
-			deaccel_keys = 0;
+			accel = 0;
 		else if (key == GLFW_KEY_LEFT_ALT)
 			character_stop = false;
 		//속력감소의 원상복귀
