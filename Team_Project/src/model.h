@@ -63,7 +63,7 @@ bool load_models() {
 	return res;
 }
 
-int	deaccel_keys = 0;
+int	accel = 0;
 // 이것에 따라 속력 감퇴여부 결정
 //vec3 s_center = vec3(0, 0, 0); // sphere의 시작지점
 
