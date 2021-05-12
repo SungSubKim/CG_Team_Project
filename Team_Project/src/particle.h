@@ -39,32 +39,32 @@ inline void particle_t::reset()
 inline void particle_t::update(float x, float y, bool space, int direction)
 {
 	float times = float(glfwGetTime()) - tmp_time;
-	vec2 plus = vec2(random_range(0.0f, 10.5f), random_range(0, 10.5f));
-
-	/*switch (direction) {
+	vec2 plus = vec2(random_range(1.0f, 10.5f), random_range(0, 10.5f));
+	/*
+	switch (direction) {
 		case 1:
-			pos.x = x - plus.x;
-			pos.y = y + plus.y;
+			pos.x = x - plus.x * cos(getModel("Character").theta);
+			pos.y = y + plus.y * sin(getModel("Character").theta);
 			break;
 		case 2:
-			pos.x = x + plus.x;
-			pos.y = y + plus.y;
+			pos.x = x + plus.x * cos(getModel("Character").theta);
+			pos.y = y + plus.y * sin(getModel("Character").theta);
 			break;
 		case 3:
-			pos.x = x + plus.y;
-			pos.y = y - plus.x;
+			pos.x = x + plus.y * cos(getModel("Character").theta);
+			pos.y = y - plus.x * sin(getModel("Character").theta);
 			break;
 		case 4:
-			pos.x = x + plus.y;
-			pos.y = y + plus.x;
+			pos.x = x + plus.y * cos(getModel("Character").theta);
+			pos.y = y + plus.x * sin(getModel("Character").theta);
 			break;
 		default:
 			pos.x = x;
 			pos.y = y;
 			break;
-	}*/
-	pos.x = x+plus.x * cos(getModel("Character").theta);
-	pos.y = y-plus.y * sin(getModel("Character").theta);
+	} */
+	pos.x = x + plus.x * cos(getModel("Character").theta);
+	pos.y = y - plus.y * sin(getModel("Character").theta);
 	elapsed_time += times;
 
 	if (elapsed_time > time_interval){

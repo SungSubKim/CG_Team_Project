@@ -1,9 +1,13 @@
 # Computer Graphics Team Project - Woori's Adventure
 The goal of this team project is implementing a game that uses OpenGL for main graphics API.
 
-## Details
-How to Play?
+## How to Play?
+    $git clone https://github.com/hanwoolsky/CG_Team_Project.git
+    
+    Go to Team_Project/bin and execute cgmodel.exe
 
+## Title image
+<img width="1600" alt="Title image" src="./Team_Project/bin/images/CGTitle.png">
 
 ## Contributer
 1. hanwoolsky (Hanwool Huh)
