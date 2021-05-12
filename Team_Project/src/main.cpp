@@ -245,7 +245,7 @@ void update()
 	
 	glActiveTexture(GL_TEXTURE4);								// select the texture slot to bind
 	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
-	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
+	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);		
 	
 
 	glActiveTexture(GL_TEXTURE5);								// select the texture slot to bind
@@ -374,7 +374,7 @@ void render()
 	{
 		mat4 translate_matrix = mat4::translate(vec3(p.pos.x, 15.0f, p.pos.y));
 		mat4 scale_matrix = mat4::scale(p.scale);
-		mat4 model_matrix = translate_matrix * scale_matrix;
+		mat4 model_matrix = translate_matrix *scale_matrix;
 
 		glActiveTexture(GL_TEXTURE0);		// select the texture slot to bind
 		glBindTexture(GL_TEXTURE_2D, SNOWTEX);

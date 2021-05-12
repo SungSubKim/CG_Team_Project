@@ -29,7 +29,7 @@ inline void particle_t::reset()
 {
 	pos = vec2(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f));
 	color = vec4(1.0f, 1.0f, 1.0f, 1);
-	scale = random_range(1.5f, 2.8f);
+	scale = random_range(4.5f, 5.8f);
 	life = random_range(0.01f, 0.02f);
 	elapsed_time = 0.0f;
 	time_interval = random_range(200.0f, 600.0f);
@@ -39,9 +39,9 @@ inline void particle_t::reset()
 inline void particle_t::update(float x, float y, bool space, int direction)
 {
 	float times = float(glfwGetTime()) - tmp_time;
-	vec2 plus = vec2(random_range(0.0f, 10.5f), random_range(-0.5f, 0.5f));
+	vec2 plus = vec2(random_range(0.0f, 10.5f), random_range(0, 10.5f));
 
-	switch (direction) {
+	/*switch (direction) {
 		case 1:
 			pos.x = x - plus.x;
 			pos.y = y + plus.y;
@@ -62,7 +62,9 @@ inline void particle_t::update(float x, float y, bool space, int direction)
 			pos.x = x;
 			pos.y = y;
 			break;
-	}
+	}*/
+	pos.x = x+plus.x * cos(getModel("Character").theta);
+	pos.y = y-plus.y * sin(getModel("Character").theta);
 	elapsed_time += times;
 
 	if (elapsed_time > time_interval){
