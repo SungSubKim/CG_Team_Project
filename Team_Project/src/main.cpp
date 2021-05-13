@@ -1,11 +1,17 @@
 #include "cgmath.h"			// slee's simple math library
 #define STB_IMAGE_IMPLEMENTATION
+#include "cgut.h"			// slee's OpenGL utility
 #include "cgut2.h"			// slee's OpenGL utility
 #include "trackball.h"
 #include "assimp_loader.h"
 #include "model.h"
 #include "area.h"
 #include "particle.h"
+
+//*******************************************************************
+// forward declarations for freetype text
+bool init_text();
+void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
 
 //*************************************
 // global constants
@@ -59,11 +65,6 @@ mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,
 GLFWwindow*	window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
 
-
-
-
-
-
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
@@ -82,6 +83,7 @@ GLuint	SNOWTEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
+float	a = 0.0f;
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_wireframe = false;
@@ -257,13 +259,13 @@ void update()
 	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
 	glUniform1i(glGetUniformLocation(program, "SKY_FRONT"), 6);
 	
-	
-	
 	// select the texture slot to bind
 	for (auto& p : particles) {
 		p.update(s_center.x, s_center.z, b_space, direc);
 	}
 	b_space = false;
+
+	a = abs(sin(float(glfwGetTime()) * 2.5f));
 }
 void render()
 {
@@ -388,9 +390,13 @@ void render()
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	}
-	glDisable(GL_BLEND);
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	
+	float dpi_scale = cg_get_dpi_scale();
+	render_text("Hello text!", 100, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+	render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+	render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, a), dpi_scale);
+	glDisable(GL_BLEND);
 	glfwSwapBuffers(window);
 }
 
@@ -556,11 +562,12 @@ bool user_init()
 
 	// init GL states
 	glClearColor(0 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f);	// set clear color
+	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);								// turn on backface culling
 	glEnable(GL_DEPTH_TEST);								// turn on depth tests
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	vertex corners[4];
 	corners[0].pos = vec3(-1.0f, -1.0f, 0.0f);	corners[0].tex = vec2(0.0f, 0.0f);
@@ -636,6 +643,8 @@ bool user_init()
 
 	// initialize particles
 	particles.resize(particle_t::MAX_PARTICLES);
+
+	if (!init_text()) return false;
 
 	return true;
 }
