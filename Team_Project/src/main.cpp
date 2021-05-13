@@ -371,7 +371,6 @@ void render()
 	mode = 0;
 	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, false);
 
-	glEnable(GL_BLEND);
 	for (auto& p : particles)
 	{
 		mat4 translate_matrix = mat4::translate(vec3(p.pos.x, 15.0f, p.pos.y));
@@ -396,7 +395,7 @@ void render()
 	render_text("Hello text!", 100, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
 	render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 	render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, a), dpi_scale);
-	glDisable(GL_BLEND);
+
 	glfwSwapBuffers(window);
 }
 
