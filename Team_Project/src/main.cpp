@@ -296,11 +296,11 @@ void render()
 		sprintf(strA[6], "Press Space key to start!");
 
 		render_text(strA[0], 260, 50, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[1], 50, 100, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[2], 50, 150, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[3], 50, 200,  0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[4], 50, 250, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[5], 50, 300, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[1], 50, 110, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[2], 50, 160, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[3], 50, 210,  0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[4], 50, 260, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[5], 50, 310, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
 		render_text(strA[6], 60, 450, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
