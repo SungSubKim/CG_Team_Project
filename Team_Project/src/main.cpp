@@ -290,7 +290,16 @@ void render()
 		return;
 	}
 	if (before_game == 1) {
-		alpha = 0.2f+0.8f*abs(sin(float(glfwGetTime()) ));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, SELECTTEX);
+		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
+		glBindVertexArray(vertex_array);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glfwSwapBuffers(window);
+		return;
+	}
+	if (before_game == 2) {
+		alpha = 0.2f + 0.8f * abs(sin(float(glfwGetTime())));
 		float dpi_scale = cg_get_dpi_scale();
 		char strA[10][100];
 		sprintf(strA[0], "**How to play this game**");
@@ -308,16 +317,7 @@ void render()
 		render_text(strA[3], 50, 210, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 		render_text(strA[4], 50, 260, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 		render_text(strA[5], 50, 310, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[6], 80, 450, 1.0f, vec4(1,1, 0, alpha), dpi_scale);
-		glfwSwapBuffers(window);
-		return;
-	}
-	if (before_game == 2) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, SELECTTEX);
-		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
-		glBindVertexArray(vertex_array);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text(strA[6], 80, 450, 1.0f, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
@@ -564,9 +564,6 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			return;
 		}
 		if (before_game == 1) {
-			return;
-		}
-		if (before_game == 2) {
 			/*printf("%f %f\n", pos.x, pos.y);
 			return;*/
 			if (269 < pos.x && pos.x < 596 && 124 < pos.y && pos.y < 585) {
@@ -579,6 +576,9 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 				hani.pMesh = load_model(hani.path);
 				models[6] = hani;
 			}
+			return;
+		}
+		if (before_game == 2) {
 			return;
 		}
 		vec2 npos = cursor_to_ndc(pos, window_size);
