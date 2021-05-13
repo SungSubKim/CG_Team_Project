@@ -469,9 +469,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	//printf("%d %d %d \n", action, mods, key);
 	if (action == GLFW_PRESS)
 	{
-		if (before_game == 0 || before_game==2)
-			return;
-		else if (before_game == 1) {
+		if (before_game <3) {
 			if (key == GLFW_KEY_SPACE)
 				before_game++;
 			return;
