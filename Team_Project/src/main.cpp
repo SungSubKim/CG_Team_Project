@@ -290,7 +290,7 @@ void render()
 		return;
 	}
 	if (before_game == 1) {
-		alpha = abs(sin(float(glfwGetTime()) * 4.0f));
+		alpha = 0.2f+0.8f*abs(sin(float(glfwGetTime()) ));
 		float dpi_scale = cg_get_dpi_scale();
 		char strA[10][100];
 		sprintf(strA[0], "**How to play this game**");
@@ -308,7 +308,7 @@ void render()
 		render_text(strA[3], 50, 210, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 		render_text(strA[4], 50, 260, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 		render_text(strA[5], 50, 310, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[6], 60, 450, 1.0f, vec4(1.0f, 1.0f, 1.0f, alpha), dpi_scale);
+		render_text(strA[6], 80, 450, 1.0f, vec4(1,1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
@@ -560,7 +560,6 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-		//printf("%f %f\n", pos.x, pos.y);
 		if (before_game==0) {
 			if (894 < pos.x && pos.x < 1181 && 64 < pos.y && pos.y < 150)
 				before_game++;
@@ -570,10 +569,12 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			return;
 		}
 		if (before_game == 2) {
-			if (269 < pos.x && pos.x < 596 && 93 < pos.y && pos.y < 554) {
+			/*printf("%f %f\n", pos.x, pos.y);
+			return;*/
+			if (269 < pos.x && pos.x < 596 && 124 < pos.y && pos.y < 585) {
 				before_game++;
 			}
-			if (693 < pos.x && pos.x < 1018 && 93 < pos.y && pos.y < 554) {
+			if (693 < pos.x && pos.x < 1018 && 124 < pos.y && pos.y < 585) {
 				before_game++;
 				delete models[6].pMesh;
 				model hani = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
