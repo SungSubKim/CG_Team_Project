@@ -57,6 +57,10 @@ void main()
 		fragColor = texture( TITLETEX, tc );
 		return;
 	}
+	if (before_game ==2) {
+		fragColor = texture( TITLETEX, tc );
+		return;
+	}
 	vec4 lpos = view_matrix*light_position;
 	vec3 n = normalize(norm);	// norm interpolated via rasterizer should be normalized again here
 	vec3 p = epos.xyz;			// 3D position of this fragment
