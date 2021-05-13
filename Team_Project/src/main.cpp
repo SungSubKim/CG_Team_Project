@@ -78,15 +78,15 @@ irrklang::ISoundSource* mp3_src = nullptr;
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
-GLuint vertex_buffer = 0;	// ID holder for vertex buffer
-GLuint index_buffer = 0;		// ID holder for index buffer
+GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
+GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
 GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
-float	a = 0.0f;
+float	alpha = 1.0f;
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_wireframe = false;
@@ -271,8 +271,6 @@ void update()
 		p.update(s_center.x, s_center.z, b_space, direc);
 	}
 	b_space = false;
-
-	a = abs(sin(float(glfwGetTime()) * 2.5f));
 }
 void render()
 {
@@ -292,6 +290,7 @@ void render()
 		return;
 	}
 	if (before_game == 1) {
+		alpha = abs(sin(float(glfwGetTime()) * 4.0f));
 		float dpi_scale = cg_get_dpi_scale();
 		char strA[10][100];
 		sprintf(strA[0], "**How to play this game**");
@@ -303,13 +302,13 @@ void render()
 		sprintf(strA[5], "Press Space key to fire the snowflakes.");
 		sprintf(strA[6], "Press Space key to start!");
 
-		render_text(strA[0], 260, 50, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[1], 50, 110, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[2], 50, 160, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[3], 50, 210, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[4], 50, 260, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[5], 50, 310, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
-		render_text(strA[6], 60, 450, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[0], 260, 50, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text(strA[1], 50, 110, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text(strA[2], 50, 160, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text(strA[3], 50, 210, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text(strA[4], 50, 260, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text(strA[5], 50, 310, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text(strA[6], 60, 450, 1.0f, vec4(1.0f, 1.0f, 1.0f, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
