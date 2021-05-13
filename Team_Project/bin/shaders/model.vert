@@ -7,7 +7,7 @@ layout(location=2) in vec2 texcoord;
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
-uniform bool title;
+uniform int before_game;
 
 
 out vec4 epos;	// eye-space position
@@ -16,7 +16,7 @@ out vec2 tc;	// texture coordinate
 
 void main()
 {
-	if(title) {
+	if(before_game==0) {
 		gl_Position = vec4(position,1);
 		tc = texcoord;
 		norm = vec3(0);
