@@ -30,6 +30,7 @@ uniform sampler2D SKY_BACK;
 uniform sampler2D SKY_RIGHT;
 uniform sampler2D SKY_UP;
 uniform sampler2D SKY_FRONT;
+uniform sampler2D TITLETEX;
 
 uniform bool use_texture;
 uniform vec4 ambient;
@@ -41,7 +42,7 @@ uniform vec4 color;
 uniform float	shininess;
 uniform vec4	light_position, Ia, Id, Is;	// light
 uniform vec4	Ka, Kd, Ks;					// material properties
-
+uniform int before_game;
 vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 {
 	vec4 Ira = ambient*Ia;									// ambient reflection
@@ -51,7 +52,15 @@ vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 }
 
 void main()
-{
+{	
+	if (before_game ==0) {
+		fragColor = texture( TITLETEX, tc );
+		return;
+	}
+	if (before_game ==2) {
+		fragColor = texture( TITLETEX, tc );
+		return;
+	}
 	vec4 lpos = view_matrix*light_position;
 	vec3 n = normalize(norm);	// norm interpolated via rasterizer should be normalized again here
 	vec3 p = epos.xyz;			// 3D position of this fragment

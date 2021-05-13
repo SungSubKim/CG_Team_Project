@@ -25,6 +25,8 @@ static const char* skybox_right_path = "../bin/images/posx.jpg";
 static const char* skybox_up_path = "../bin/images/posy.jpg";
 static const char* skybox_front_path = "../bin/images/posz.jpg";
 static const char* snow_image_path = "../bin/images/snow-flake.png";
+static const char* title_image_path = "../bin/images/CGTitle.png";
+static const char* select_image_path = "../bin/images/character_select.png";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -72,14 +74,7 @@ GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0;
-GLuint	SKY_LEFT = 0;
-GLuint	SKY_DOWN = 0;
-GLuint	SKY_BACK = 0;
-GLuint	SKY_RIGHT = 0;
-GLuint	SKY_UP = 0;
-GLuint	SKY_FRONT = 0;
-GLuint	SNOWTEX = 0;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
@@ -91,7 +86,7 @@ int		direc = 0;
 bool	b_space = false, character_stop = false;
 std::vector<particle_t> particles;
 int stage = 1, enemy_num=3;
-
+int	before_game = 0; // 0(title) -> (1) help -> (2) game start
 //*************************************
 // scene objects
 
@@ -154,6 +149,10 @@ void update()
 {
 	
 	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
+	if (before_game < 3) 
+		return;
+	
 
 	// update projection matrix
 	cam.aspect_ratio = window_size.x / float(window_size.y);
@@ -275,6 +274,47 @@ void render()
 	// notify GL that we use our own program
 	glUseProgram(program);
 	
+	if (before_game==0) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, TITLETEX);
+		glUniform1i(glGetUniformLocation(program, "TITLETEX"), 0);
+		glBindVertexArray(vertex_array);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glfwSwapBuffers(window);
+		return;
+	}
+	if (before_game == 1) {
+		float dpi_scale = cg_get_dpi_scale();
+		char strA[10][100];
+		sprintf(strA[0], "**How to play this game**");
+		//\nPress direction keys to move the character.\nPress%d
+		sprintf(strA[1], "Press direction keys to move the character.");
+		sprintf(strA[2], "Press Left Control key to accelerate the speed.");
+		sprintf(strA[3], "Press Left Alt key to rotate the character");
+		sprintf(strA[4], "without any moving.");
+		sprintf(strA[5], "Press Space key to fire the snowflakes.");
+		sprintf(strA[6], "Press Space key to start!");
+
+		render_text(strA[0], 260, 50, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[1], 50, 110, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[2], 50, 160, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[3], 50, 210, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[4], 50, 260, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[5], 50, 310, 0.8f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		render_text(strA[6], 60, 450, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale);
+		glfwSwapBuffers(window);
+		return;
+	}
+	if (before_game == 2) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, SELECTTEX);
+		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
+		glBindVertexArray(vertex_array);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glfwSwapBuffers(window);
+		return;
+	}
+
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
@@ -392,9 +432,9 @@ void render()
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	
 	float dpi_scale = cg_get_dpi_scale();
-	render_text("Hello text!", 100, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-	render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-	render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, a), dpi_scale);
+	char strA[50];
+	sprintf(strA, "Stage: %d", stage);
+	render_text(strA, 50, 50, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale);
 
 	glfwSwapBuffers(window);
 }
@@ -422,6 +462,13 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	//printf("%d %d %d \n", action, mods, key);
 	if (action == GLFW_PRESS)
 	{
+		if (before_game == 0 || before_game==2)
+			return;
+		else if (before_game == 1) {
+			if (key == GLFW_KEY_SPACE)
+				before_game++;
+			return;
+		}
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_HOME)					cam = camera();
@@ -506,6 +553,28 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
+		//printf("%f %f\n", pos.x, pos.y);
+		if (before_game==0) {
+			if (894 < pos.x && pos.x < 1181 && 64 < pos.y && pos.y < 150)
+				before_game++;
+			return;
+		}
+		if (before_game == 1) {
+			return;
+		}
+		if (before_game == 2) {
+			if (269 < pos.x && pos.x < 596 && 93 < pos.y && pos.y < 554) {
+				before_game++;
+			}
+			if (693 < pos.x && pos.x < 1018 && 93 < pos.y && pos.y < 554) {
+				before_game++;
+				delete models[6].pMesh;
+				model lena = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
+				lena.pMesh = load_model(lena.path);
+				models[6] = lena;
+			}
+			return;
+		}
 		vec2 npos = cursor_to_ndc(pos, window_size);
 		if (action == GLFW_PRESS)			tb.begin(cam.view_matrix, npos);
 		else if (action == GLFW_RELEASE)	tb.end();
@@ -608,7 +677,7 @@ bool user_init()
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map3.obj","Map3",
 		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Character.obj","Character",vec3(0),0.4f});
+	models.push_back({ "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f});
 	models.push_back({ "../bin/mesh/Enemy1.obj","Enemy1",
 		vec3(96,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy2.obj","Enemy2",
@@ -622,7 +691,6 @@ bool user_init()
 		//models에 저장된 모델들을 불러온다. 모델의 mesh pointer는 models의 model구조체에 저장된다.
 		return false;
 
-	getModel("Character").center = vec3(2.3f, 0, 20);
 
 	static vertex snow_vertices[] = { {vec3(-1,-1,0),vec3(0,0,1),vec2(0,0)}, {vec3(1,-1,0),vec3(0,0,1),vec2(1,0)}, {vec3(-1,1,0),vec3(0,0,1),vec2(0,1)}, {vec3(1,1,0),vec3(0,0,1),vec2(1,1)} }; // strip ordering [0, 1, 3, 2]
 
@@ -644,7 +712,8 @@ bool user_init()
 	particles.resize(particle_t::MAX_PARTICLES);
 
 	if (!init_text()) return false;
-
+	TITLETEX = create_texture(title_image_path, true); if (!TITLETEX) return false;
+	SELECTTEX = create_texture(select_image_path, true); if (!SELECTTEX) return false;
 	return true;
 }
 
