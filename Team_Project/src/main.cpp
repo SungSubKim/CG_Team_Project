@@ -7,6 +7,8 @@
 #include "model.h"
 #include "area.h"
 #include "particle.h"
+#include "irrKlang\irrKlang.h"
+#pragma comment(lib, "irrKlang.lib")
 
 //*******************************************************************
 // forward declarations for freetype text
@@ -27,6 +29,7 @@ static const char* skybox_front_path = "../bin/images/posz.jpg";
 static const char* snow_image_path = "../bin/images/snow-flake.png";
 static const char* title_image_path = "../bin/images/CGTitle.png";
 static const char* select_image_path = "../bin/images/character_select.png";
+static const char* mp3_path = "../bin/sounds/Music.mp3";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -66,6 +69,11 @@ mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,
 // window objects
 GLFWwindow*	window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
+
+//*******************************************************************
+// irrKlang objects
+irrklang::ISoundEngine* engine;
+irrklang::ISoundSource* mp3_src = nullptr;
 
 //*************************************
 // OpenGL objects
@@ -569,9 +577,9 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			if (693 < pos.x && pos.x < 1018 && 93 < pos.y && pos.y < 554) {
 				before_game++;
 				delete models[6].pMesh;
-				model lena = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
-				lena.pMesh = load_model(lena.path);
-				models[6] = lena;
+				model hani = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
+				hani.pMesh = load_model(hani.path);
+				models[6] = hani;
 			}
 			return;
 		}
@@ -598,7 +606,7 @@ GLuint create_texture(const char* image_path, bool mipmap = true, GLenum wrap = 
 	GLint	internal_format = c == 1 ? GL_R8 : c == 2 ? GL_RG8 : c == 3 ? GL_RGB8 : GL_RGBA8;
 	GLenum	format = c == 1 ? GL_RED : c == 2 ? GL_RG : c == 3 ? GL_RGB : GL_RGBA;
 
-	// create a src texture (lena texture)
+	// create a src texture (hani texture)
 	GLuint texture;
 	glGenTextures(1, &texture); if (texture == 0) { printf("%s(): failed in glGenTextures()\n", __func__); return 0; }
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -714,15 +722,31 @@ bool user_init()
 	if (!init_text()) return false;
 	TITLETEX = create_texture(title_image_path, true); if (!TITLETEX) return false;
 	SELECTTEX = create_texture(select_image_path, true); if (!SELECTTEX) return false;
+
+	engine = irrklang::createIrrKlangDevice();
+	if (!engine) return false;
+
+	//add sound source from the sound file
+	mp3_src = engine->addSoundSourceFromFile(mp3_path);
+
+	//set default volume
+	mp3_src->setDefaultVolume(0.5f);
+
+	//play the sound file
+	engine->play2D(mp3_src, true);
+	printf("> playing %s\n", "mp3");
+
 	return true;
 }
 
 void user_finalize()
 {
+	//모델들의 mesh pointer에 접근해서 자료 지우기
 	delete_texture_cache();
 	for (auto& model : models)
 		delete model.pMesh;
-	//모델들의 mesh pointer에 접근해서 자료 지우기
+	// close the engine
+	engine->drop();
 }
 
 int main(int argc, char* argv[])
