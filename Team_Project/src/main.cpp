@@ -93,7 +93,7 @@ bool	b_wireframe = false;
 int		direc = 0;
 bool	b_space = false, character_stop = false;
 std::vector<particle_t> particles;
-int stage = 1, enemy_num=3;
+int stage = 0, enemy_num=3;
 int	before_game = 0; // 0(title) -> (1) help -> (2) game start
 //*************************************
 // scene objects
@@ -112,47 +112,7 @@ float min(float a, float b) {
 	return a < b ? a : b;
 }
 	//float& theta = getModel("Character").theta;
-void rotate_chracter(float t, float old_t, float ntheta) {
-	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
-	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
-	//printf("%f %f %f\n", theta, 2*PI, theta0);
-	float& theta = getModel("Character").theta;
-	int vel = 5;
-	if (l || r || u || d) {
-		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (abs(theta-ntheta) < 0.2f)
-			theta = ntheta;
-		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
-			if (abs(theta - PI) < 0.01f || abs(theta - PI / 2 * 3) < 0.01f ||
-				abs(theta) < 0.01f)
-				theta += vel * (t - old_t);
-			else //(theta<0.01f || 2*PI-theta<0.01f)
-				theta -= vel * (t - old_t);
-		}
-		//좌<->우, 상<->하 이동시 일관성부여
-		else if (theta < ntheta ) {
-			//위에를 제외하고 ntheta가 더클때
-			if (abs(abs(ntheta - theta) - PI) < 0.01f || ntheta - theta <= PI)
-				theta += vel * (t - old_t);
-			//증가하는게 최선
-			else
-				theta -= vel * (t - old_t);
-			//감소하는게 최선
-		}
-		else if (theta >ntheta) {
-			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
-			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
-			if (theta - ntheta < PI)
-				theta -= vel * (t - old_t); // * abs(ntheta - theta0);
-			else
-				theta += vel * (t - old_t);// *abs(ntheta - theta0);
-		}
-	}
-	while (theta >= 2 * PI)
-		theta -= 2 * PI;
-	while (theta < 0)
-		theta += 2 * PI;
-}
+void rotate_chracter(float t, float old_t, float ntheta);
 void update()
 {
 	
@@ -217,6 +177,8 @@ void update()
 		stage++;
 	//stage clear조건
 	setStage(stage);
+	if (stage == 0)
+		stage++;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
 	model_character.update_matrix();
@@ -505,6 +467,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glPolygonMode(GL_FRONT_AND_BACK, b_wireframe ? GL_LINE : GL_FILL);
 			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
 		}
+		else if (key == GLFW_KEY_R)
+		{
+			before_game = 0;
+			stage = 0;
+		}
 		else if (key == GLFW_KEY_LEFT) {
 			l = true; r = false; u = false; d = false;
 		}
@@ -568,6 +535,10 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			return;*/
 			if (269 < pos.x && pos.x < 596 && 124 < pos.y && pos.y < 585) {
 				before_game++;
+				delete models[6].pMesh;
+				model hani = { "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f };
+				hani.pMesh = load_model(hani.path);
+				models[6] = hani;
 			}
 			if (693 < pos.x && pos.x < 1018 && 124 < pos.y && pos.y < 585) {
 				before_game++;
@@ -628,6 +599,47 @@ GLuint create_texture(const char* image_path, bool mipmap = true, GLenum wrap = 
 
 	return texture;
 }
+void rotate_chracter(float t, float old_t, float ntheta) {
+	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
+	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
+	//printf("%f %f %f\n", theta, 2*PI, theta0);
+	float& theta = getModel("Character").theta;
+	int vel = 5;
+	if (l || r || u || d) {
+		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
+		if (abs(theta - ntheta) < 0.2f)
+			theta = ntheta;
+		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
+			if (abs(theta - PI) < 0.01f || abs(theta - PI / 2 * 3) < 0.01f ||
+				abs(theta) < 0.01f)
+				theta += vel * (t - old_t);
+			else //(theta<0.01f || 2*PI-theta<0.01f)
+				theta -= vel * (t - old_t);
+		}
+		//좌<->우, 상<->하 이동시 일관성부여
+		else if (theta < ntheta) {
+			//위에를 제외하고 ntheta가 더클때
+			if (abs(abs(ntheta - theta) - PI) < 0.01f || ntheta - theta <= PI)
+				theta += vel * (t - old_t);
+			//증가하는게 최선
+			else
+				theta -= vel * (t - old_t);
+			//감소하는게 최선
+		}
+		else if (theta > ntheta) {
+			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
+			//	theta -= 10 * (t - old_t);// *abs(ntheta - theta0);
+			if (theta - ntheta < PI)
+				theta -= vel * (t - old_t); // * abs(ntheta - theta0);
+			else
+				theta += vel * (t - old_t);// *abs(ntheta - theta0);
+		}
+	}
+	while (theta >= 2 * PI)
+		theta -= 2 * PI;
+	while (theta < 0)
+		theta += 2 * PI;
+}
 
 bool user_init()
 {
@@ -669,27 +681,18 @@ bool user_init()
 	SKY_FRONT = create_texture(skybox_front_path, true); if (!SKY_FRONT) return false;
 
 	// load the mesh
-	models.push_back({ "../bin/mesh/Map1.obj","Map1",
-		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({"../bin/mesh/Triangle.obj","triangle",
-		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map1.obj","Map1", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({"../bin/mesh/Triangle.obj","triangle", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.back().visible = false;
-	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",
-		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",
-		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.back().visible = false;
-	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" ,
-		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Map3.obj","Map3",
-		vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f});
-	models.push_back({ "../bin/mesh/Enemy1.obj","Enemy1",
-		vec3(96,0,16), (0.5) });
-	models.push_back({ "../bin/mesh/Enemy2.obj","Enemy2",
-		vec3(16,0,16), (0.5) });
-	models.push_back({ "../bin/mesh/Enemy3.obj","Enemy3",
-		vec3(8,0,32),(0.5) });
+	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" , vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Map3.obj","Map3", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Character.obj", "Character",vec3(0),0.4f});
+	models.push_back({ "../bin/mesh/Enemy1.obj", "Enemy1", vec3(96,0,16), (0.5) });
+	models.push_back({ "../bin/mesh/Enemy2.obj", "Enemy2", vec3(16,0,16), (0.5) });
+	models.push_back({ "../bin/mesh/Enemy3.obj", "Enemy3", vec3(8,0,32),(0.5) });
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 	// model matrix의 정보도 바로 생성해서 삽입
 

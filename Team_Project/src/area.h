@@ -180,6 +180,7 @@ void setStage(int stage) {
 	if (old_stage + 1 == stage) {
 		switch (stage) {
 			case 1:
+				getModel("Character").center = vec3(2.3f, 0, 20);
 				getModel("Map1").visible = true;
 				getModel("Map2_1").visible = false;
 				getModel("Map2_3").visible = false;
