@@ -29,7 +29,7 @@ static const char* skybox_front_path = "../bin/images/posz.jpg";
 static const char* snow_image_path = "../bin/images/snow-flake.png";
 static const char* title_image_path = "../bin/images/CGTitle.png";
 static const char* select_image_path = "../bin/images/character_select.png";
-static const char* mp3_path = "../bin/sounds/Music.mp3";
+static const char* mp3_path = "../bin/sounds/CGMusic.mp3";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -733,7 +733,6 @@ bool user_init()
 
 	//play the sound file
 	engine->play2D(mp3_src, true);
-	printf("> playing %s\n", "mp3");
 
 	return true;
 }
