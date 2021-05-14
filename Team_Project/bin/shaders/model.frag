@@ -53,11 +53,7 @@ vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 
 void main()
 {	
-	if (before_game ==0) {
-		fragColor = texture( TITLETEX, tc );
-		return;
-	}
-	if (before_game ==2) {
+	if (before_game <3) {
 		fragColor = texture( TITLETEX, tc );
 		return;
 	}

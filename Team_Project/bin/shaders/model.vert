@@ -16,7 +16,7 @@ out vec2 tc;	// texture coordinate
 
 void main()
 {
-	if(before_game==0 || before_game==2) {
+	if(before_game < 3) {
 		gl_Position = vec4(position,1);
 		tc = texcoord;
 		norm = vec3(0);
