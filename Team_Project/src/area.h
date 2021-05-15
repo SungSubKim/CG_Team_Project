@@ -140,22 +140,57 @@ void check_map3() {
 inline float xz_distance(vec3 a, vec3 b) {
 	return  pow((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z),0.5f);
 }
-int check_to_enemy() {
+
+inline int x_distance(vec3 a, vec3 b) {
+	int direct;
+	if (a.x - b.x > 0) direct = 2;
+	else direct = 1;
+
+	return direct;
+}
+
+inline int z_distance(vec3 a, vec3 b) {
+	int direct;
+	if (a.z - b.z > 0) direct = 4;
+	else direct = 3;
+	return direct;
+}
+
+inline int direction(vec3 a, vec3 b) {
+	int dist;
+	if (abs(a.x - b.x) < 5.0f && abs(a.z - b.z) < 20.0f) {
+		dist = z_distance(a, b);
+	}
+	else if (abs(a.x - b.x) < 20.0f && abs(a.z - b.z) < 5.0f) {
+		dist = x_distance(a, b);
+	}
+	return dist;
+}
+
+int check_to_enemy(int direc, bool space) {
 	vec3& s_center = getModel("Character").center;
 	int res = 0;
 	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
-	/*printf("%f %f %f\n", xz_distance(e_center1, s_center), xz_distance(e_center2, s_center),
-		xz_distance(e_center3, s_center));*/
-	if (xz_distance(e1.center, s_center) < 5)
+	if (xz_distance(e1.center, s_center) < 20 && space && direction(e1.center, s_center) == direc)
 		getModel("Enemy1").visible = false;
-	if (xz_distance(e2.center, s_center) < 5)
+	if (xz_distance(e2.center, s_center) < 20 && space && direction(e2.center, s_center) == direc)
 		getModel("Enemy2").visible = false;
-	if (xz_distance(e3.center, s_center) < 5) {
-		//printf("hi\n");
+	if (xz_distance(e3.center, s_center) < 20 && space && direction(e3.center, s_center) == direc)
 		getModel("Enemy3").visible = false;
-	}
 	if (e1.visible) res++; if (e2.visible) res++; if (e3.visible) res++;
 	return res;
+}
+
+void check_collision(){
+	vec3& s_center = getModel("Character").center;
+	int res = 0;
+	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
+	if (xz_distance(e1.center, s_center) < 5.0f)
+		printf("collision\n");
+	if (xz_distance(e2.center, s_center) < 5.0f)
+		printf("collision\n");
+	if (xz_distance(e3.center, s_center) < 5.0f)
+		printf("collision\n");
 }
 bool getTriangle() {
 	int stage=2;

@@ -161,11 +161,13 @@ void update()
 	switch (stage) {
 		case 1:
 			check_map1();
-			enemy_num = check_to_enemy();
+			enemy_num = check_to_enemy(direc, b_space);
+			check_collision();
 			break;
 		case 2:
 			check_map2();
-			enemy_num = check_to_enemy();
+			enemy_num = check_to_enemy(direc, b_space);
+			check_collision();
 			b_triangle = getTriangle();
 			break;
 		case 3:

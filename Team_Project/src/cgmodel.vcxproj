@@ -60,6 +60,7 @@
     <ClCompile Include="text.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="area.h" />
     <ClInclude Include="assimp_loader.h" />
     <ClInclude Include="cgmath.h" />
     <ClInclude Include="cgut.h" />
