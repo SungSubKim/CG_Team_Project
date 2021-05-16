@@ -212,7 +212,7 @@ inline int direction(vec3 a, vec3 b) {
 	}
 	return dist;
 }
-int check_to_enemy() {
+int check_to_enemy(int direc, bool space) {
 	vec3& s_center = getModel("Character").center;
 	int res = 0;
 	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
