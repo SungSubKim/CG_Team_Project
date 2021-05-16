@@ -30,6 +30,9 @@ static const char* snow_image_path = "../bin/images/snow-flake.png";
 static const char* title_image_path = "../bin/images/CGTitle.png";
 static const char* select_image_path = "../bin/images/character_select.png";
 static const char* mp3_path = "../bin/sounds/CGMusic.mp3";
+static const char* attack_mp3_path = "../bin/sounds/attack.mp3";
+static const char* bell_mp3_path = "../bin/sounds/bell.mp3";
+static const char* falling_mp3_path = "../bin/sounds/falling.mp3";
 
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
@@ -74,6 +77,9 @@ ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial w
 // irrKlang objects
 irrklang::ISoundEngine* engine;
 irrklang::ISoundSource* mp3_src = nullptr;
+irrklang::ISoundSource* attack_mp3_src = nullptr;
+irrklang::ISoundSource* bell_mp3_src = nullptr;
+irrklang::ISoundSource* falling_mp3_src = nullptr;
 
 //*************************************
 // OpenGL objects
@@ -461,7 +467,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if (key == GLFW_KEY_SPACE) b_space = true;
+		else if (key == GLFW_KEY_SPACE) {
+			engine->play2D(attack_mp3_src, false);
+			b_space = true;
+		}
 #ifndef GL_ES_VERSION_2_0
 		else if (key == GLFW_KEY_W)
 		{
@@ -731,12 +740,21 @@ bool user_init()
 
 	//add sound source from the sound file
 	mp3_src = engine->addSoundSourceFromFile(mp3_path);
+	attack_mp3_src = engine->addSoundSourceFromFile(attack_mp3_path);
+	bell_mp3_src = engine->addSoundSourceFromFile(bell_mp3_path);
+	falling_mp3_src = engine->addSoundSourceFromFile(falling_mp3_path);
 
 	//set default volume
-	mp3_src->setDefaultVolume(0.5f);
+	mp3_src->setDefaultVolume(0.7f);
+	attack_mp3_src->setDefaultVolume(0.5f);
+	bell_mp3_src->setDefaultVolume(0.5f);
+	falling_mp3_src->setDefaultVolume(0.5f);
 
 	//play the sound file
 	engine->play2D(mp3_src, true);
+	//engine->play2D(attack_mp3_src, true);
+	//engine->play2D(bell_mp3_src, true);
+	//engine->play2D(falling_mp3_src, true);
 
 	return true;
 }
