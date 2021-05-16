@@ -106,7 +106,7 @@ float theta0=0;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
-
+int frame_counter = 0;
 //*************************************
 float min(float a, float b) {
 	return a < b ? a : b;
@@ -134,6 +134,43 @@ void update()
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
+	//몬스터 움직임 구현
+	model& model_duck1 = getModel("Enemy1");
+	model& model_duck2 = getModel("Enemy2");
+	model& model_duck3 = getModel("Enemy3");
+	vec3& e1_center = model_duck1.center;
+	vec3& e2_center = model_duck2.center;
+	vec3& e3_center = model_duck3.center;
+	vec3& direction_to_character1 = s_center - e1_center;
+	vec3& direction_to_character2 = s_center - e2_center;
+	vec3& direction_to_character3 = s_center - e3_center;
+	
+	float distance = xz_distance(s_center, e1_center);
+	if (e1_center.z - s_center.z < 0) {
+		if (e1_center.x - s_center.x > 0) {
+			model_duck1.theta = PI / 2 - atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
+		}
+		else {
+			model_duck1.theta = PI / 2 + atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
+		}
+	}
+	else {
+		if (e1_center.x - s_center.x > 0) {
+			model_duck1.theta = atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)))-PI/2;
+		}
+		else {
+			model_duck1.theta = -atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
+		}
+	}
+	//e1_center.z -= 0.1f;
+	e1_center = e1_center + normalize(direction_to_character1)/5.0f;
+	//e2_center = e2_center + direction_to_character2 / 100.0f;
+	//e3_center = e3_center + direction_to_character3 / 100.0f;
+	
+	
+	//model_duck2.pole = vec3(1, 0, 0);
+	//e1_center.x -= 0.01f;
+	
 	if (!character_stop)
 		ds = (t - old_t);
 	if (l) {
@@ -158,6 +195,7 @@ void update()
 	} 
 	rotate_chracter(t, old_t,ntheta);
 	old_t = t;
+	
 	switch (stage) {
 		case 1:
 			check_map1();
@@ -180,8 +218,12 @@ void update()
 	if (stage == 0)
 		stage++;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
+	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
 	model_character.update_matrix();
+	model_duck1.update_matrix();
+	model_duck2.update_matrix();
+	model_duck3.update_matrix();
 	//center와 theta의 정보를 캐릭터매트릭스에 반영한다.
 	
 	// update uniform variables in vertex/fragment shaders
@@ -200,31 +242,34 @@ void update()
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 
 	
-	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
+	//화면 skybox 부분
+	// glBindTexture(SKY_XXX) : 이 방향대로 붙어있으니 텍스처를 바꾸고싶으면 여기서 바꾸면 됨
+	glActiveTexture(GL_TEXTURE1);								
+	glBindTexture(GL_TEXTURE_2D, SKY_LEFT); 
+	
 	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
 	
 
-	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE2);								
 	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
 	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
 	
 
-	glActiveTexture(GL_TEXTURE3);								// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE3);								
 	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
 	glUniform1i(glGetUniformLocation(program, "SKY_BACK"), 3);
 	
-	glActiveTexture(GL_TEXTURE4);								// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE4);								
 	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
 	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);		
 	
 
-	glActiveTexture(GL_TEXTURE5);								// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE5);								
 	glBindTexture(GL_TEXTURE_2D, SKY_UP);
 	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
 	
 
-	glActiveTexture(GL_TEXTURE6);								// select the texture slot to bind
+	glActiveTexture(GL_TEXTURE6);								
 	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
 	glUniform1i(glGetUniformLocation(program, "SKY_FRONT"), 6);
 	
@@ -294,6 +339,8 @@ void render()
 		if (!model.visible)
 			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
 			continue;
+		//if (model.name == "Enemy1"||model.name=="Enemy2"||model.name=="Enemy3")
+		//	continue;
 		mesh2* pMesh = model.pMesh;
 		//메쉬포인터 지정하기, 이하 예전 코드와 동일
 		glBindVertexArray(pMesh->vertex_array);
@@ -307,7 +354,7 @@ void render()
 			//printf("%lf\n", g.mat->textures.ambient.id);
 			if (g.mat->textures.diffuse) {
 				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			}
 			else {
@@ -315,7 +362,6 @@ void render()
 				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 				glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
 				glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
-				//glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 			}
 
@@ -331,48 +377,41 @@ void render()
 	glBindVertexArray(vertex_array);
 	
 	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
+
 	model_matrix_background = mat4::translate(100,100,-250)*mat4::scale(300.0f, 300.0f, 100.0f); 
-	//front
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
 	mode = 6;
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
-	
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
+	
 	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
-	//back
-	
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
 	mode = 3;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(-200, 100, 50)* mat4::rotate(vec3(0,1,0),PI/2)* mat4::scale(300.0f, 300.0f, 100.0f);
-	//left
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
 	mode = 1;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(400, 100, 50) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
-	//right
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
 	mode = 4;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1,0,0),-PI/2)*mat4::scale(300.0f, 300.0f, 100.0f);
-	//down
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
 	mode = 2;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(100, 400, 50) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
-	//up
-	
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); //구 사용
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
 	mode = 5;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
