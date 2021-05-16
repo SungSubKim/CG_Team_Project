@@ -14,30 +14,15 @@ in vec2 tc;
 out vec4 fragColor;
 
 // texture sampler
-uniform bool	sky;
-uniform bool	snow;
+uniform bool	sky, snow;
 uniform int		mode;
 //sky변수의 추가 이것에 따라 어떤 값을 fragColor로 사용할지 결정
 uniform mat4	view_matrix;
-uniform sampler2D TEX_SKY;
-uniform sampler2D TEX_SNOW;
-//uniform sampler2D TEX_MAP1;
-//uniform sampler2D TEX_MAP2;
-//uniform sampler2D TEX_MAP3;
-uniform sampler2D SKY_LEFT;
-uniform sampler2D SKY_DOWN;
-uniform sampler2D SKY_BACK;
-uniform sampler2D SKY_RIGHT;
-uniform sampler2D SKY_UP;
-uniform sampler2D SKY_FRONT;
-uniform sampler2D TITLETEX;
+//uniform sampler2D TEX_MAP1, TEX_MAP2, TEX_MAP3;
+uniform sampler2D TEX_SKY, TEX_SNOW, SKY_LEFT, SKY_DOWN ,SKY_BACK, SKY_RIGHT, SKY_UP, SKY_FRONT, TITLETEX;
 
 uniform bool use_texture;
-uniform vec4 ambient;
-uniform vec4 diffuse;
-uniform vec4 specular;
-uniform vec4 emissive;
-uniform vec4 color;
+uniform vec4 ambient, diffuse, specular, emissive, color;
 
 uniform float	shininess;
 uniform vec4	light_position, Ia, Id, Is;	// light
