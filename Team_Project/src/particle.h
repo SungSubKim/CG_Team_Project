@@ -27,7 +27,7 @@ struct particle_t
 
 inline void particle_t::reset()
 {
-	pos = vec2(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f));
+	//pos = vec2(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f));
 	color = vec4(1.0f, 1.0f, 1.0f, 1);
 	scale = random_range(4.5f, 5.8f);
 	life = random_range(0.01f, 0.02f);
