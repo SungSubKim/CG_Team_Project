@@ -9,6 +9,9 @@ struct square
 	GLint z_length;
 };
 vec3 old_s_center = vec3(0);
+vec3 old_e1_center = vec3(0);
+vec3 old_e2_center = vec3(0);
+vec3 old_e3_center = vec3(0);
 std::vector<struct square> divided_map1_land = {
 	{ vec3(0,0,0),128,72 },{ vec3(90,0,0),36,72 } };
 std::vector<struct square> divided_map1_obstacle = {
@@ -32,8 +35,12 @@ std::vector<struct square> divided_map3 = {
 void check_map1() {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
+	model& e1_character = getModel("Enemy1");
 	vec3& s_center = model_character.center;
+	vec3& e1_center = e1_character.center;
 	bool onLand_old = false, onLand_now = false;
+	bool onLand_old_e1 = false, onLand_now_e1 = false;
+
 	for (auto& s : divided_map1_land) {
 		if ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
 			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
@@ -46,7 +53,21 @@ void check_map1() {
 			onLand_now = true;
 		}
 	}
+
+	for (auto& s : divided_map1_land) {
+		if ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length
+			&& s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length))
+		{
+			onLand_old_e1 = true;
+		}
+		if ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length
+			&& s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length))
+		{
+			onLand_now_e1 = true;
+		}
+	}
 	bool onObstacle_old = false, onObstacle_now = false;
+	bool onObstacle_old_e1 = false, onObstacle_now_e1 = false;
 	for (auto& s : divided_map1_obstacle) {
 		if ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
 			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
@@ -59,12 +80,37 @@ void check_map1() {
 			onObstacle_now = true;
 		}
 	}
+
+	for (auto& s : divided_map1_land) {
+		if ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length
+			&& s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length))
+		{
+			onObstacle_old_e1 = true;
+		}
+		if ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length
+			&& s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length))
+		{
+			onObstacle_now_e1 = true;
+		}
+	}
+
+
 	if (pow((s_center.x - 69) / 25.0f, 2) + pow((s_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_now = true;
 	if (pow((old_s_center.x - 69) / 25.0f, 2) + pow((old_s_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_old = true;
-	if((!onObstacle_old && onObstacle_now)|| (onLand_old&&!onLand_now))
+	if (pow((e1_center.x - 69) / 25.0f, 2) + pow((e1_center.z - 35) / 13.0f, 2) < 1)
+		onObstacle_now_e1 = true;
+	if (pow((old_e1_center.x - 69) / 25.0f, 2) + pow((old_e1_center.z - 35) / 13.0f, 2) < 1)
+		onObstacle_old_e1 = true;
+	if ((!onObstacle_old && onObstacle_now) || (onLand_old && !onLand_now)) {
 		CopyMemory(s_center, old_s_center, sizeof(vec3));
+		
+	}
+	if ((!onObstacle_old_e1 && onObstacle_now_e1) || (onLand_old_e1 && !onLand_now_e1)) {
+		CopyMemory(e1_center, old_e1_center, sizeof(vec3));
+	}
+	
 
 	return;
 }
@@ -166,8 +212,7 @@ inline int direction(vec3 a, vec3 b) {
 	}
 	return dist;
 }
-
-int check_to_enemy(int direc, bool space) {
+int check_to_enemy() {
 	vec3& s_center = getModel("Character").center;
 	int res = 0;
 	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
