@@ -94,13 +94,17 @@ GLuint	mode;
 // global variables
 float	alpha = 1.0f;
 int		frame = 0;		// index of rendering frames
+int		direc = 0;
+int		stage = 0;
+int		enemy_num = 3;
+int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 bool	show_texcoord = false;
 bool	b_wireframe = false;
-int		direc = 0;
-bool	b_space = false, character_stop = false;
+bool	b_space = false;
+bool	character_stop = false;
+bool	isfall = false;
 std::vector<particle_t> particles;
-int stage = 0, enemy_num=3;
-int	before_game = 0; // 0(title) -> (1) help -> (2) game start
+
 //*************************************
 // scene objects
 
@@ -209,8 +213,10 @@ void update()
 			check_collision();
 			break;
 		case 2:
-			check_map2();
+			isfall = check_map2(isfall);
 			enemy_num = check_to_enemy(direc, b_space);
+			if(isfall) engine->play2D(falling_mp3_src, false);
+			isfall = false;
 			check_collision();
 			b_triangle = getTriangle();
 			break;
@@ -219,8 +225,7 @@ void update()
 		default:
 			break;
 	}
-	if ((stage == 1 && enemy_num == 0 )||(stage == 2 && b_triangle))
-		stage++;
+	if ((stage == 1 && enemy_num == 0 )||(stage == 2 && b_triangle)) stage++;
 	//stage clearÁ¶°Ç
 	setStage(stage);
 	if (stage == 0)
@@ -392,7 +397,6 @@ void render()
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	
 	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 

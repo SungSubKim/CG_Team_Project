@@ -111,10 +111,9 @@ void check_map1() {
 		CopyMemory(e1_center, old_e1_center, sizeof(vec3));
 	}
 	
-
 	return;
 }
-void check_map2() {
+bool check_map2(bool fall) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -149,13 +148,14 @@ void check_map2() {
 			// 다리위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
 			s_center.x = 0;
 			s_center.z = 0;
+			fall = true;
 		}
 		else {
 			// 육지위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
 			CopyMemory(s_center, old_s_center, sizeof(vec3));
 		}
 	}
-	return;
+	return fall;
 }
 void check_map3() {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
