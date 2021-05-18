@@ -96,6 +96,7 @@ float	alpha = 1.0f;
 int		frame = 0;		// index of rendering frames
 int		direc = 0;
 int		stage = 0;
+int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 bool	show_texcoord = false;
@@ -210,14 +211,17 @@ void update()
 		case 1:
 			check_map1();
 			enemy_num = check_to_enemy(direc, b_space);
-			check_collision();
+			life = check_collision(life);
 			break;
 		case 2:
 			isfall = check_map2(isfall);
 			enemy_num = check_to_enemy(direc, b_space);
-			if(isfall) engine->play2D(falling_mp3_src, false);
+			if (isfall) {
+				engine->play2D(falling_mp3_src, false);
+				life--;
+			}
 			isfall = false;
-			check_collision();
+			life = check_collision(life);
 			b_triangle = getTriangle();
 			break;
 		case 3:
@@ -452,9 +456,11 @@ void render()
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	
 	float dpi_scale = cg_get_dpi_scale();
-	char strA[50];
-	sprintf(strA, "Stage: %d", stage);
-	render_text(strA, 50, 50, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale);
+	char stagenum[20], lifenum[20];
+	sprintf(stagenum, "Stage: %d", stage);
+	sprintf(lifenum, "Life: %d", life);
+	render_text(stagenum, 50, 50, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale); // reshape 고려해야함
+	render_text(lifenum, window_size.x - 220, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
 
 	glfwSwapBuffers(window);
 }

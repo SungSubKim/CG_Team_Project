@@ -12,6 +12,9 @@ vec3 old_s_center = vec3(0);
 vec3 old_e1_center = vec3(0);
 vec3 old_e2_center = vec3(0);
 vec3 old_e3_center = vec3(0);
+bool e1collide = false;
+bool e2collide = false;
+bool e3collide = false;
 std::vector<struct square> divided_map1_land = {
 	{ vec3(0,0,0),128,72 },{ vec3(90,0,0),36,72 } };
 std::vector<struct square> divided_map1_obstacle = {
@@ -145,10 +148,17 @@ bool check_map2(bool fall) {
 	}
 	if (!onBridge_now && !onLand_now) {
 		if (onBridge_old) {
+			//int interval = 250;
 			// 다리위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
+			fall = true;
+			/*
+			while (interval--) {
+				s_center.y--;
+				printf("%f\n", s_center.y);
+			} */ 
 			s_center.x = 0;
 			s_center.z = 0;
-			fall = true;
+			//s_center.y = 0;
 		}
 		else {
 			// 육지위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
@@ -203,7 +213,7 @@ inline int z_distance(vec3 a, vec3 b) {
 }
 
 inline int direction(vec3 a, vec3 b) {
-	int dist;
+	int dist = 0;
 	if (abs(a.x - b.x) < 5.0f && abs(a.z - b.z) < 20.0f) {
 		dist = z_distance(a, b);
 	}
@@ -226,16 +236,33 @@ int check_to_enemy(int direc, bool space) {
 	return res;
 }
 
-void check_collision(){
+int check_collision(int life){
 	vec3& s_center = getModel("Character").center;
-	int res = 0;
 	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
-	if (xz_distance(e1.center, s_center) < 5.0f)
-		printf("collision\n");
-	if (xz_distance(e2.center, s_center) < 5.0f)
-		printf("collision\n");
-	if (xz_distance(e3.center, s_center) < 5.0f)
-		printf("collision\n");
+	bool collide = false;
+	
+	if (!e1collide && xz_distance(e1.center, s_center) < 5.0f) {
+		printf("geelo\n");
+		collide = true;
+		e1collide = true;
+	}
+	if (!e2collide && xz_distance(e2.center, s_center) < 5.0f) {
+		printf("geelo\n");
+		collide = true;
+		e2collide = true;
+	}
+	if (!e3collide && xz_distance(e3.center, s_center) < 5.0f) {
+		printf("geelo\n");
+		collide = true;
+		e3collide = true;
+	}
+
+	if (collide) {
+		life--;
+		collide = false;
+	}
+
+	return life;
 }
 bool getTriangle() {
 	int stage=2;
