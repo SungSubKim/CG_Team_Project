@@ -269,7 +269,7 @@ bool getTriangle() {
 	vec3& s_center = getModel("Character").center;
 
 	vec3& t_center = getModel("triangle").center;
-	printf("%f \n", xz_distance(vec3(120, 0, 35), s_center));
+	//printf("%f \n", xz_distance(vec3(120, 0, 35), s_center));
 	if (xz_distance(vec3(120, 0, 35), s_center) < 7 ) {
 		stage = 3;
 		s_center = vec3(0);

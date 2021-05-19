@@ -508,13 +508,13 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	//printf("%d %d %d \n", action, mods, key);
 	if (action == GLFW_PRESS)
 	{
+		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		if (before_game <3) {
 			if (key == GLFW_KEY_SPACE)
 				before_game++;
 			return;
 		}
-		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
+		if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
 			b_help = true;
 		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
