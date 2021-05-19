@@ -64,11 +64,24 @@ inline ivec2 normalized_loc(float x,float y, ivec2 window_size)
 
 	return ivec2(int(npos.x),int(npos.y));
 }
-inline ivec2 normalized_loc(int x, int y, ivec2 window_size)
+inline ivec2 converted_loc(float x, float y, ivec2 window_size, vec2 default_size = vec2(1280,720))
 {
-	ivec2 window_size_1280 = ivec2(1280, 720);
-	vec2 npos = vec2(float(x) * float(window_size.x) / 1280.0f,
-		float(y) * float(window_size.y) / 720.0f);
+	vec2 npos = vec2(float(x) / float(window_size.x) * default_size.x, 
+		float(y) / float(window_size.y) * default_size.y);
+
+	return ivec2(int(npos.x), int(npos.y));
+}
+inline ivec2 converted_loc(double x, double y, ivec2 window_size, vec2 default_size = vec2(1280, 720))
+{
+	vec2 npos = vec2(float(x) / float(window_size.x) * default_size.x,
+		float(y) / float(window_size.y) * default_size.y);
+
+	return ivec2(int(npos.x), int(npos.y));
+}
+inline ivec2 converted_loc(int x, int y, ivec2 window_size, vec2 default_size = vec2(1280, 720))
+{
+	vec2 npos = vec2(float(x) / float(window_size.x) * default_size.x,
+		float(y) / float(window_size.y) * default_size.y);
 
 	return ivec2(int(npos.x), int(npos.y));
 }

@@ -115,13 +115,13 @@ bool init_text()
 void render_text(std::string text, GLint _x, GLint _y, GLfloat scale, vec4 color, GLfloat dpi_scale)
 {
 	// apply dpi_scale
-	if (dpi_scale > 1.0f)
+	/*if (dpi_scale > 1.0f)
 	{
 		_x = int(_x * dpi_scale);
 		_y = int(_y * dpi_scale);
 		scale *= dpi_scale;
-	}
-
+	}*/
+	
 	// Activate corresponding render state	
 	extern ivec2 window_size;
 	GLfloat x = GLfloat(_x);

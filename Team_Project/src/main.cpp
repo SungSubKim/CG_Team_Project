@@ -324,13 +324,14 @@ void render()
 	}
 	if (before_game == 2) {
 		alpha = 0.2f + 0.8f * abs(sin(float(glfwGetTime())));
-		int x = window_size.x;
-		int y = window_size.y;
+		int x = window_size.x, y = window_size.y;
+		float scale_x = x / 1280.0f, scale_y = y / 720.0f;
+		float scale = min(scale_x, scale_y);
 
-		render_text("** How to play this game **", x/4, y/6, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press direction keys to move the character.", x/6, y*2/6, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to fire the snowflakes.", x/6, y*3/6, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to start!", x/5, y*4/5, 1.0f, vec4(1, 1, 0, alpha), dpi_scale);
+		render_text("** How to play this game **", x/4, y/6, 0.8f*scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press direction keys to move the character.", x/6, y*2/6, 0.8f*scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to fire the snowflakes.", x/6, y*3/6, 0.8f*scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to start!", x/5, y*4/5, 1.0f*scale, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
@@ -572,22 +573,24 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-		if (before_game==0) {
-			if (894 < pos.x && pos.x < 1181 && 64 < pos.y && pos.y < 150)
+		ivec2 npos2 = converted_loc(pos.x, pos.y, window_size);
+		printf("%f %f %d %d\n", pos.x, pos.y, npos2.x, npos2.y);
+		if (before_game == 0) {
+			if (894 < npos2.x && npos2.x < 1181 && 64 < npos2.y && npos2.y < 150)
 				before_game++;
 			return;
 		}
 		if (before_game == 1) {
 			/*printf("%f %f\n", pos.x, pos.y);
 			return;*/
-			if (269 < pos.x && pos.x < 596 && 124 < pos.y && pos.y < 585) {
+			if (269 < npos2.x && npos2.x < 596 && 124 < npos2.y && npos2.y < 585) {
 				before_game++;
 				delete models[6].pMesh;
 				model hani = { "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f };
 				hani.pMesh = load_model(hani.path);
 				models[6] = hani;
 			}
-			if (693 < pos.x && pos.x < 1018 && 124 < pos.y && pos.y < 585) {
+			if (693 < npos2.x && npos2.x < 1018 && 124 < npos2.y && npos2.y < 585) {
 				before_game++;
 				delete models[6].pMesh;
 				model hani = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
@@ -602,7 +605,6 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 		vec2 npos = cursor_to_ndc(pos, window_size);
 		if (action == GLFW_PRESS) {
 			tb.begin(cam.view_matrix, npos);
-			printf("%f %f\n", pos.x, pos.y);
 		}
 		else if (action == GLFW_RELEASE)	tb.end();
 	}
