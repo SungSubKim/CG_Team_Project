@@ -263,13 +263,14 @@ int check_collision(int life){
 
 	return life;
 }
-bool getTriangle(bool tri) {
+bool getTriangle() {
 	int stage=2;
 	bool res = false;
 	vec3& s_center = getModel("Character").center;
 
 	vec3& t_center = getModel("triangle").center;
-	if (xz_distance(vec3(120, 0, 35), s_center) < 7 && tri) {
+	printf("%f \n", xz_distance(vec3(120, 0, 35), s_center));
+	if (xz_distance(vec3(120, 0, 35), s_center) < 7 ) {
 		stage = 3;
 		s_center = vec3(0);
 		t_center = vec3(s_center.x, 15.0f, s_center.z);

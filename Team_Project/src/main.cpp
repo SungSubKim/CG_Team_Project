@@ -28,7 +28,11 @@ static const char* skybox_up_path = "../bin/images/Background.png";
 static const char* skybox_front_path = "../bin/images/Background.png";
 static const char* snow_image_path = "../bin/images/snow-flake.png";
 static const char* title_image_path = "../bin/images/CGTitle.png";
+static const char* help_image_path1 = "../bin/images/Map1.png";
+static const char* help_image_path2 = "../bin/images/Map2.png";
+static const char* help_image_path3 = "../bin/images/Map3.png";
 static const char* select_image_path = "../bin/images/character_select.png";
+static const char* final_image_path = "../bin/images/Final.png";
 static const char* mp3_path = "../bin/sounds/CGMusic.mp3";
 static const char* attack_mp3_path = "../bin/sounds/attack.mp3";
 static const char* bell_mp3_path = "../bin/sounds/bell.mp3";
@@ -88,7 +92,7 @@ GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX=0 ;
 GLuint	mode;
 //*************************************
 // global variables
@@ -99,6 +103,7 @@ int		stage = 0;
 int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
+bool	b_help = false;
 bool	show_texcoord = false;
 bool	b_wireframe = false;
 bool	b_space = false;
@@ -130,6 +135,8 @@ void update()
 	
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
+	glUniform1i(glGetUniformLocation(program, "b_help"), b_help);
+	glUniform1i(glGetUniformLocation(program, "stage"), stage);
 	if (before_game < 3) 
 		return;
 	
@@ -221,7 +228,7 @@ void update()
 				life--;
 			}
 			isfall = false;
-			b_triangle = getTriangle(b_triangle);
+			b_triangle = getTriangle();
 			break;
 		case 3:
 			check_map3();
@@ -304,10 +311,33 @@ void render()
 
 	float dpi_scale = cg_get_dpi_scale();
 
-	if (before_game==0) {
+	if (before_game==0 || b_help) {
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, TITLETEX);
-		glUniform1i(glGetUniformLocation(program, "TITLETEX"), 0);
+		if (b_help) {
+			switch (stage) {
+				case 1:
+					glBindTexture(GL_TEXTURE_2D, HELPTEX1);
+					glUniform1i(glGetUniformLocation(program, "HELPTEX1"), 0);
+					break;
+				case 2:
+					glBindTexture(GL_TEXTURE_2D, HELPTEX2);
+					glUniform1i(glGetUniformLocation(program, "HELPTEX2"), 0);
+					break;
+				case 3:
+					glBindTexture(GL_TEXTURE_2D, HELPTEX3);
+					glUniform1i(glGetUniformLocation(program, "HELPTEX3"), 0);
+					break;
+				default : //final
+					glBindTexture(GL_TEXTURE_2D, FINALTEX);
+					glUniform1i(glGetUniformLocation(program, "FINALTEX"), 0);
+					break;
+			}
+		}
+
+		else {
+			glBindTexture(GL_TEXTURE_2D, TITLETEX);
+			glUniform1i(glGetUniformLocation(program, "TITLETEX"), 0);
+		}
 		glBindVertexArray(vertex_array);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glfwSwapBuffers(window);
@@ -484,7 +514,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			return;
 		}
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
+			b_help = true;
+		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T) {
 			model& m = getModel("triangle");
@@ -550,6 +582,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_RELEASE) {
 		if (key == GLFW_KEY_LEFT) {
 			l = false;
+		}
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
+			b_help = false;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
 			r = false;
@@ -774,6 +809,10 @@ bool user_init()
 
 	if (!init_text()) return false;
 	TITLETEX = create_texture(title_image_path, true); if (!TITLETEX) return false;
+	HELPTEX1 = create_texture(help_image_path1, true); if (!HELPTEX1) return false;
+	HELPTEX2 = create_texture(help_image_path2, true); if (!HELPTEX2) return false;
+	HELPTEX3 = create_texture(help_image_path3, true); if (!HELPTEX3) return false;
+	FINALTEX = create_texture(final_image_path, true); if (!FINALTEX) return false;
 	SELECTTEX = create_texture(select_image_path, true); if (!SELECTTEX) return false;
 
 	engine = irrklang::createIrrKlangDevice();
