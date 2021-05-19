@@ -97,7 +97,6 @@ void check_map1() {
 		}
 	}
 
-
 	if (pow((s_center.x - 69) / 25.0f, 2) + pow((s_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_now = true;
 	if (pow((old_s_center.x - 69) / 25.0f, 2) + pow((old_s_center.z - 35) / 13.0f, 2) < 1)
@@ -264,15 +263,16 @@ int check_collision(int life){
 
 	return life;
 }
-bool getTriangle() {
+bool getTriangle(bool tri) {
 	int stage=2;
 	bool res = false;
 	vec3& s_center = getModel("Character").center;
 
 	vec3& t_center = getModel("triangle").center;
-	if (xz_distance(vec3(120, 0, 35), s_center) < 7) {
+	if (xz_distance(vec3(120, 0, 35), s_center) < 7 && tri) {
 		stage = 3;
 		s_center = vec3(0);
+		t_center = vec3(s_center.x, 15.0f, s_center.z);
 		getModel("triangle").visible = false;
 		getModel("Enemy3").visible = false;
 		getModel("Enemy2").visible = false;

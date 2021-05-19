@@ -104,6 +104,7 @@ bool	b_wireframe = false;
 bool	b_space = false;
 bool	character_stop = false;
 bool	isfall = false;
+bool	b_triangle = true;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -215,18 +216,15 @@ void update()
 			break;
 		case 2:
 			isfall = check_map2(isfall);
-			enemy_num = check_to_enemy(direc, b_space);
 			if (isfall) {
 				engine->play2D(falling_mp3_src, false);
 				life--;
 			}
 			isfall = false;
-			life = check_collision(life);
-			b_triangle = getTriangle();
+			b_triangle = getTriangle(b_triangle);
 			break;
 		case 3:
 			check_map3();
-		default:
 			break;
 	}
 	if ((stage == 1 && enemy_num == 0 )||(stage == 2 && b_triangle)) stage++;
@@ -459,7 +457,7 @@ void render()
 	char stagenum[20], lifenum[20];
 	sprintf(stagenum, "Stage: %d", stage);
 	sprintf(lifenum, "Life: %d", life);
-	render_text(stagenum, 50, 50, 1.0f, vec4(1, 1, 1, 1.0f), dpi_scale); // reshape 고려해야함
+	render_text(stagenum, 50, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
 	render_text(lifenum, window_size.x - 220, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
 
 	glfwSwapBuffers(window);
@@ -516,17 +514,15 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
+		else if (key == GLFW_KEY_G)
+		{
+			b_triangle = true;
+		}
 		else if (key == GLFW_KEY_SPACE) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
 		}
 #ifndef GL_ES_VERSION_2_0
-		else if (key == GLFW_KEY_W)
-		{
-			b_wireframe = !b_wireframe;
-			glPolygonMode(GL_FRONT_AND_BACK, b_wireframe ? GL_LINE : GL_FILL);
-			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
-		}
 		else if (key == GLFW_KEY_R)
 		{
 			before_game = 0;
