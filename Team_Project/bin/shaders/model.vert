@@ -8,7 +8,7 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 uniform int before_game;
-
+uniform bool b_help;
 
 out vec4 epos;	// eye-space position
 out vec3 norm;	// per-vertex normal before interpolation
@@ -16,7 +16,7 @@ out vec2 tc;	// texture coordinate
 
 void main()
 {
-	if(before_game < 3) {
+	if(before_game < 3 || b_help) {
 		gl_Position = vec4(position,1);
 		tc = texcoord;
 		norm = vec3(0);
