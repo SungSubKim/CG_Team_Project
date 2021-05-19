@@ -182,7 +182,7 @@ void update()
 		}
 	}
 	//e1_center.z -= 0.1f;
-	e1_center = e1_center + normalize(direction_to_character1)/5.0f;
+	e1_center = e1_center + normalize(direction_to_character1)*(t-old_t)*10.0f;
 	//e2_center = e2_center + direction_to_character2 / 100.0f;
 	//e3_center = e3_center + direction_to_character3 / 100.0f;
 	
