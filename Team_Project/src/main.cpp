@@ -451,15 +451,9 @@ void render()
 	char stagenum[20], lifenum[20];
 	sprintf(stagenum, "Stage: %d", stage);
 	sprintf(lifenum, "Life: %d", life);
-<<<<<<< HEAD
+
 	render_text(stagenum, 50, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
 	render_text(lifenum, window_size.x - 220, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
-=======
-	ivec2 stage_loc = normalized_loc(50, 50, window_size);
-	ivec2 life_loc = normalized_loc(window_size.x-250, 50, window_size);
-	render_text(stagenum, stage_loc.x, stage_loc.y, window_size.x/1280.0f, vec4(0, 0, 1, 1.0f), dpi_scale); // reshape 고려해야함
-	render_text(lifenum, life_loc.x, life_loc.y, window_size.x / 1280.0f, vec4(0, 0, 1, 1.0f), dpi_scale);
->>>>>>> 5682043058e1d9839da6bb021ccdeaa7a72b5b94
 
 	glfwSwapBuffers(window);
 }
