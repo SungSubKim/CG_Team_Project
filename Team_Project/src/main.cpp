@@ -117,8 +117,8 @@ std::vector<particle_t> particles;
 
 camera		cam;
 trackball	tb;
-bool l = false, r = false, u = false, d = false; // ¾î´ÀÂÊÀ¸·Î keyboard°¡ ´­·È´ÂÁö flag
-float old_t=0;					//update ÇÔ¼ö¿¡¼­ dt°ª °è»êÀ» À§ÇØ ¾²ÀÌ´Â old value
+bool l = false, r = false, u = false, d = false; // ì–´ëŠìª½ìœ¼ë¡œ keyboardê°€ ëˆŒë ¸ëŠ”ì§€ flag
+float old_t=0;					//update í•¨ìˆ˜ì—ì„œ dtê°’ ê³„ì‚°ì„ ìœ„í•´ ì“°ì´ëŠ” old value
 float theta0=0;
 mat4 model_matrix0;
 light_t		light;
@@ -150,10 +150,10 @@ void update()
 	int rate = 20; if (accel) rate *= 2;
 	float ntheta=0, ds=0;
 	static bool b_triangle = false;
-	//Å°º¸µå¿¡¼­ left controlÅ°¸¦ ´©¸¥ »óÅÂ¸é ¼Ó·ÂÀÌ °¨¼ÒÇÏ°Ô ÇØÁØ´Ù
+	//í‚¤ë³´ë“œì—ì„œ left controlí‚¤ë¥¼ ëˆ„ë¥¸ ìƒíƒœë©´ ì†ë ¥ì´ ê°ì†Œí•˜ê²Œ í•´ì¤€ë‹¤
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
-	//¸ó½ºÅÍ ¿òÁ÷ÀÓ ±¸Çö
+	//ëª¬ìŠ¤í„° ì›€ì§ì„ êµ¬í˜„
 	model& model_duck1 = getModel("Enemy1");
 	model& model_duck2 = getModel("Enemy2");
 	model& model_duck3 = getModel("Enemy3");
@@ -182,7 +182,7 @@ void update()
 		}
 	}
 	//e1_center.z -= 0.1f;
-	e1_center = e1_center + normalize(direction_to_character1)/5.0f;
+	e1_center = e1_center + normalize(direction_to_character1)*(t-old_t);
 	//e2_center = e2_center + direction_to_character2 / 100.0f;
 	//e3_center = e3_center + direction_to_character3 / 100.0f;
 	
@@ -235,18 +235,18 @@ void update()
 			break;
 	}
 	if ((stage == 1 && enemy_num == 0 )||(stage == 2 && b_triangle)) stage++;
-	//stage clearÁ¶°Ç
+	//stage clearì¡°ê±´
 	setStage(stage);
 	if (stage == 0)
 		stage++;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
-	// old_s_centerÀÇ °ªÀ» ÁØºñÇÏ¿© backtrackingÀ» ÁØºñ
+	// old_s_centerì˜ ê°’ì„ ì¤€ë¹„í•˜ì—¬ backtrackingì„ ì¤€ë¹„
 	model_character.update_matrix();
 	model_duck1.update_matrix();
 	model_duck2.update_matrix();
 	model_duck3.update_matrix();
-	//center¿Í thetaÀÇ Á¤º¸¸¦ Ä³¸¯ÅÍ¸ÅÆ®¸¯½º¿¡ ¹İ¿µÇÑ´Ù.
+	//centerì™€ thetaì˜ ì •ë³´ë¥¼ ìºë¦­í„°ë§¤íŠ¸ë¦­ìŠ¤ì— ë°˜ì˜í•œë‹¤.
 	
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
@@ -264,8 +264,8 @@ void update()
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 
 	
-	//È­¸é skybox ºÎºĞ
-	// glBindTexture(SKY_XXX) : ÀÌ ¹æÇâ´ë·Î ºÙ¾îÀÖÀ¸´Ï ÅØ½ºÃ³¸¦ ¹Ù²Ù°í½ÍÀ¸¸é ¿©±â¼­ ¹Ù²Ù¸é µÊ
+	//í™”ë©´ skybox ë¶€ë¶„
+	// glBindTexture(SKY_XXX) : ì´ ë°©í–¥ëŒ€ë¡œ ë¶™ì–´ìˆìœ¼ë‹ˆ í…ìŠ¤ì²˜ë¥¼ ë°”ê¾¸ê³ ì‹¶ìœ¼ë©´ ì—¬ê¸°ì„œ ë°”ê¾¸ë©´ ë¨
 	glActiveTexture(GL_TEXTURE1);								
 	glBindTexture(GL_TEXTURE_2D, SKY_LEFT); 
 	
@@ -370,20 +370,20 @@ void render()
 	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	mode = 0;
-	//false¸¦ ³Ö¾îÁØ´Ù.
+	//falseë¥¼ ë„£ì–´ì¤€ë‹¤.
 	for (auto& model : models) {
-		// ¸ğµç models vector¿¡ µî·ÏµÈ modelÀ» µ¹¸ç ·»´õ¸µÇÑ´Ù.
+		// ëª¨ë“  models vectorì— ë“±ë¡ëœ modelì„ ëŒë©° ë Œë”ë§í•œë‹¤.
 		if (!model.visible)
-			//model structÀÇ visibleÀÌ ²¨Á®ÀÖÀ¸¸é Ãâ·ÂÇÏÁö ¾Ê°í ³Ñ¾î°£´Ù.
+			//model structì˜ visibleì´ êº¼ì ¸ìˆìœ¼ë©´ ì¶œë ¥í•˜ì§€ ì•Šê³  ë„˜ì–´ê°„ë‹¤.
 			continue;
 		//if (model.name == "Enemy1"||model.name=="Enemy2"||model.name=="Enemy3")
 		//	continue;
 		mesh2* pMesh = model.pMesh;
-		//¸Ş½¬Æ÷ÀÎÅÍ ÁöÁ¤ÇÏ±â, ÀÌÇÏ ¿¹Àü ÄÚµå¿Í µ¿ÀÏ
+		//ë©”ì‰¬í¬ì¸í„° ì§€ì •í•˜ê¸°, ì´í•˜ ì˜ˆì „ ì½”ë“œì™€ ë™ì¼
 		glBindVertexArray(pMesh->vertex_array);
 		GLint uloc = glGetUniformLocation(program, "model_matrix");
 		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model.model_matrix);
-		//°¢ ¸ğµ¨ÀÇ model_matrix ºÒ·¯¿Í¼­ uniformÀ¸·Î ³Ñ±â±â
+		//ê° ëª¨ë¸ì˜ model_matrix ë¶ˆëŸ¬ì™€ì„œ uniformìœ¼ë¡œ ë„˜ê¸°ê¸°
 
 		for (size_t k = 0, kn = pMesh->geometry_list.size(); k < kn; k++) {
 			geometry& g = pMesh->geometry_list[k];
@@ -407,13 +407,13 @@ void render()
 			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 		}
 	}
-	// °¡Á®¿Â ¸ğµ¨ÀÇ ·»´õ¸µÀÇ ³¡
+	// ê°€ì ¸ì˜¨ ëª¨ë¸ì˜ ë Œë”ë§ì˜ ë
 
 	//printf("%lf\n", g.mat->textures.ambient.id);
 	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, true);
 	glBindVertexArray(vertex_array);
 	
-	//´Ù½Ã skyº¯¼ö¿¡ true¸¦ ³Ö¾î fragment shader·Î ³Ñ±ä´Ù.
+	//ë‹¤ì‹œ skyë³€ìˆ˜ì— trueë¥¼ ë„£ì–´ fragment shaderë¡œ ë„˜ê¸´ë‹¤.
 
 	model_matrix_background = mat4::translate(100,100,-250)*mat4::scale(300.0f, 300.0f, 100.0f); 
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
@@ -523,7 +523,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (&m == &none)
 				printf("not found: triangle\n");
 			m.visible = !m.visible;
-			//TriangleÀÇ Ç¥½Ã¿©ºÎ¸¦ Á¶Á¤ÇÑ´Ù.
+			//Triangleì˜ í‘œì‹œì—¬ë¶€ë¥¼ ì¡°ì •í•œë‹¤.
 			show_texcoord = !show_texcoord;
 		}
 		else if (key == GLFW_KEY_C) {
@@ -570,11 +570,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (&m == &none)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;
-			//map2_2, ´Ù¸®ºÎºĞÀÇ Ç¥½ÃÀ¯¹«¸¦ Á¶ÀıÇÑ´Ù.
+			//map2_2, ë‹¤ë¦¬ë¶€ë¶„ì˜ í‘œì‹œìœ ë¬´ë¥¼ ì¡°ì ˆí•œë‹¤.
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			accel = 1;
-		// ¼Ó·Â °¨¼Ò½ÃÅ°±â update¿¡¼­ ¼Ó·ÂÀÌ 25·Î °¨¼ÒÇÑ´Ù.
+		// ì†ë ¥ ê°ì†Œì‹œí‚¤ê¸° updateì—ì„œ ì†ë ¥ì´ 25ë¡œ ê°ì†Œí•œë‹¤.
 		else if (key == GLFW_KEY_LEFT_ALT)
 			character_stop = true;
 #endif
@@ -599,7 +599,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			accel = 0;
 		else if (key == GLFW_KEY_LEFT_ALT)
 			character_stop = false;
-		//¼Ó·Â°¨¼ÒÀÇ ¿ø»óº¹±Í
+		//ì†ë ¥ê°ì†Œì˜ ì›ìƒë³µê·€
 	}
 }
 
@@ -687,13 +687,13 @@ GLuint create_texture(const char* image_path, bool mipmap = true, GLenum wrap = 
 	return texture;
 }
 void rotate_chracter(float t, float old_t, float ntheta) {
-	// ntheta¸¦ ÅëÇÏ¿© ¸ñÇ¥·Î ÇÏ´Â °¢µµ ¼³Á¤ , theta¿Í nthteaÀÇ ¹üÀ§´Â (0<= x < 2PI)
-	// thetaÀÇ °ª¸¸Å­ ¿À¸¥ÂÊ º¸´Â ¹æÇâ default¿¡¼­ ¹İ½Ã°è ¹æÇâÀ¸·Î È¸Àü
+	// nthetaë¥¼ í†µí•˜ì—¬ ëª©í‘œë¡œ í•˜ëŠ” ê°ë„ ì„¤ì • , thetaì™€ nthteaì˜ ë²”ìœ„ëŠ” (0<= x < 2PI)
+	// thetaì˜ ê°’ë§Œí¼ ì˜¤ë¥¸ìª½ ë³´ëŠ” ë°©í–¥ defaultì—ì„œ ë°˜ì‹œê³„ ë°©í–¥ìœ¼ë¡œ íšŒì „
 	//printf("%f %f %f\n", theta, 2*PI, theta0);
 	float& theta = getModel("Character").theta;
 	int vel = 5;
 	if (l || r || u || d) {
-		//È¸Àü ÁßÀÏ¶§ ntheta¿Í theta°ªÀ» Åä´ë·Î theta°ª Àç¼³Á¤
+		//íšŒì „ ì¤‘ì¼ë•Œ nthetaì™€ thetaê°’ì„ í† ëŒ€ë¡œ thetaê°’ ì¬ì„¤ì •
 		if (abs(theta - ntheta) < 0.2f)
 			theta = ntheta;
 		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
@@ -703,15 +703,15 @@ void rotate_chracter(float t, float old_t, float ntheta) {
 			else //(theta<0.01f || 2*PI-theta<0.01f)
 				theta -= vel * (t - old_t);
 		}
-		//ÁÂ<->¿ì, »ó<->ÇÏ ÀÌµ¿½Ã ÀÏ°ü¼ººÎ¿©
+		//ì¢Œ<->ìš°, ìƒ<->í•˜ ì´ë™ì‹œ ì¼ê´€ì„±ë¶€ì—¬
 		else if (theta < ntheta) {
-			//À§¿¡¸¦ Á¦¿ÜÇÏ°í ntheta°¡ ´õÅ¬¶§
+			//ìœ„ì—ë¥¼ ì œì™¸í•˜ê³  nthetaê°€ ë”í´ë•Œ
 			if (abs(abs(ntheta - theta) - PI) < 0.01f || ntheta - theta <= PI)
 				theta += vel * (t - old_t);
-			//Áõ°¡ÇÏ´Â°Ô ÃÖ¼±
+			//ì¦ê°€í•˜ëŠ”ê²Œ ìµœì„ 
 			else
 				theta -= vel * (t - old_t);
-			//°¨¼ÒÇÏ´Â°Ô ÃÖ¼±
+			//ê°ì†Œí•˜ëŠ”ê²Œ ìµœì„ 
 		}
 		else if (theta > ntheta) {
 			//if (abs(abs(ntheta - theta)-PI) < 0.01f)
@@ -758,7 +758,7 @@ bool user_init()
 	vertex_array = cg_create_vertex_array(vertex_buffer);
 	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
 
-	//ÅØ½ºÃÄ ·Îµù
+	//í…ìŠ¤ì³ ë¡œë”©
 	
 	SKY_LEFT = create_texture(skybox_left_path, true); if (!SKY_LEFT) return false;
 	SKY_DOWN = create_texture(skybox_down_path, true); if (!SKY_DOWN) return false;
@@ -780,11 +780,11 @@ bool user_init()
 	models.push_back({ "../bin/mesh/Enemy1.obj", "Enemy1", vec3(96,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy2.obj", "Enemy2", vec3(16,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy3.obj", "Enemy3", vec3(8,0,32),(0.5) });
-	//modelµéÀÇ Á¤º¸¸¦ ÀúÀåÇÑ models vector¿¡ Á¤º¸¸¦ ³Ö¾îÁØ´Ù. model.hÀÇ ÀÚ·á±¸Á¶¸¦ ÂüÁ¶
-	// model matrixÀÇ Á¤º¸µµ ¹Ù·Î »ı¼ºÇØ¼­ »ğÀÔ
+	//modelë“¤ì˜ ì •ë³´ë¥¼ ì €ì¥í•œ models vectorì— ì •ë³´ë¥¼ ë„£ì–´ì¤€ë‹¤. model.hì˜ ìë£Œêµ¬ì¡°ë¥¼ ì°¸ì¡°
+	// model matrixì˜ ì •ë³´ë„ ë°”ë¡œ ìƒì„±í•´ì„œ ì‚½ì…
 
 	if (!load_models())
-		//models¿¡ ÀúÀåµÈ ¸ğµ¨µéÀ» ºÒ·¯¿Â´Ù. ¸ğµ¨ÀÇ mesh pointer´Â modelsÀÇ model±¸Á¶Ã¼¿¡ ÀúÀåµÈ´Ù.
+		//modelsì— ì €ì¥ëœ ëª¨ë¸ë“¤ì„ ë¶ˆëŸ¬ì˜¨ë‹¤. ëª¨ë¸ì˜ mesh pointerëŠ” modelsì˜ modelêµ¬ì¡°ì²´ì— ì €ì¥ëœë‹¤.
 		return false;
 
 
@@ -841,7 +841,7 @@ bool user_init()
 
 void user_finalize()
 {
-	//¸ğµ¨µéÀÇ mesh pointer¿¡ Á¢±ÙÇØ¼­ ÀÚ·á Áö¿ì±â
+	//ëª¨ë¸ë“¤ì˜ mesh pointerì— ì ‘ê·¼í•´ì„œ ìë£Œ ì§€ìš°ê¸°
 	delete_texture_cache();
 	for (auto& model : models)
 		delete model.pMesh;
