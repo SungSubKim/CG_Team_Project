@@ -323,23 +323,14 @@ void render()
 	if (before_game == 2) {
 		alpha = 0.2f + 0.8f * abs(sin(float(glfwGetTime())));
 		float dpi_scale = cg_get_dpi_scale();
-		char strA[10][100];
-		sprintf(strA[0], "**How to play this game**");
-		//\nPress direction keys to move the character.\nPress%d
-		sprintf(strA[1], "Press direction keys to move the character.");
-		sprintf(strA[2], "Press Left Control key to accelerate the speed.");
-		sprintf(strA[3], "Press Left Alt key to rotate the character");
-		sprintf(strA[4], "without any moving.");
-		sprintf(strA[5], "Press Space key to fire the snowflakes.");
-		sprintf(strA[6], "Press Space key to start!");
 
-		render_text(strA[0], 260, 50, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[1], 50, 110, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[2], 50, 160, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[3], 50, 210, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[4], 50, 260, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[5], 50, 310, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text(strA[6], 80, 450, 1.0f, vec4(1, 1, 0, alpha), dpi_scale);
+		render_text("**How to play this game**", 260, 50, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press direction keys to move the character.", 50, 110, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Left Control key to accelerate the speed.", 50, 160, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Left Alt key to rotate the character", 50, 210, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("without any moving.", 50, 260, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to fire the snowflakes.", 50, 310, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to start!", 80, 450, 1.0f, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
@@ -454,11 +445,21 @@ void render()
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	
 	float dpi_scale = cg_get_dpi_scale();
+	dpi_scale = 1;
+	//dpi_scale = window_size.x / (float) window_size.y;
+	printf("%f\n", dpi_scale);
 	char stagenum[20], lifenum[20];
 	sprintf(stagenum, "Stage: %d", stage);
 	sprintf(lifenum, "Life: %d", life);
+<<<<<<< HEAD
 	render_text(stagenum, 50, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
 	render_text(lifenum, window_size.x - 220, 50, 1.0f, vec4(0, 0, 0, 1.0f), dpi_scale);
+=======
+	ivec2 stage_loc = normalized_loc(50, 50, window_size);
+	ivec2 life_loc = normalized_loc(window_size.x-250, 50, window_size);
+	render_text(stagenum, stage_loc.x, stage_loc.y, window_size.x/1280.0f, vec4(0, 0, 1, 1.0f), dpi_scale); // reshape 고려해야함
+	render_text(lifenum, life_loc.x, life_loc.y, window_size.x / 1280.0f, vec4(0, 0, 1, 1.0f), dpi_scale);
+>>>>>>> 5682043058e1d9839da6bb021ccdeaa7a72b5b94
 
 	glfwSwapBuffers(window);
 }
@@ -609,7 +610,10 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			return;
 		}
 		vec2 npos = cursor_to_ndc(pos, window_size);
-		if (action == GLFW_PRESS)			tb.begin(cam.view_matrix, npos);
+		if (action == GLFW_PRESS) {
+			tb.begin(cam.view_matrix, npos);
+			printf("%f %f\n", pos.x, pos.y);
+		}
 		else if (action == GLFW_RELEASE)	tb.end();
 	}
 }

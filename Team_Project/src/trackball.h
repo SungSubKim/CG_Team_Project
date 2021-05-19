@@ -56,5 +56,20 @@ inline vec2 cursor_to_ndc( dvec2 cursor, ivec2 window_size )
 	// top to bottom, while the trackball from bottom to top
 	return vec2(npos.x*2.0f-1.0f,1.0f-npos.y*2.0f);
 }
+inline ivec2 normalized_loc(float x,float y, ivec2 window_size)
+{
+	ivec2 window_size_1280 = ivec2(1280, 720);
+	vec2 npos = vec2(float(x) *float(window_size.x )/1280.0f,
+		float(y) * float(window_size.y )/720.0f);
 
+	return ivec2(int(npos.x),int(npos.y));
+}
+inline ivec2 normalized_loc(int x, int y, ivec2 window_size)
+{
+	ivec2 window_size_1280 = ivec2(1280, 720);
+	vec2 npos = vec2(float(x) * float(window_size.x) / 1280.0f,
+		float(y) * float(window_size.y) / 720.0f);
+
+	return ivec2(int(npos.x), int(npos.y));
+}
 #endif // __TRACKBALL_H__
