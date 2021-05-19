@@ -301,7 +301,9 @@ void render()
 
 	// notify GL that we use our own program
 	glUseProgram(program);
-	
+
+	float dpi_scale = cg_get_dpi_scale();
+
 	if (before_game==0) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, TITLETEX);
@@ -322,15 +324,13 @@ void render()
 	}
 	if (before_game == 2) {
 		alpha = 0.2f + 0.8f * abs(sin(float(glfwGetTime())));
-		float dpi_scale = cg_get_dpi_scale();
+		int x = window_size.x;
+		int y = window_size.y;
 
-		render_text("**How to play this game**", 260, 50, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press direction keys to move the character.", 50, 110, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Left Control key to accelerate the speed.", 50, 160, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Left Alt key to rotate the character", 50, 210, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("without any moving.", 50, 260, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to fire the snowflakes.", 50, 310, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to start!", 80, 450, 1.0f, vec4(1, 1, 0, alpha), dpi_scale);
+		render_text("** How to play this game **", x/4, y/6, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press direction keys to move the character.", x/6, y*2/6, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to fire the snowflakes.", x/6, y*3/6, 0.8f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to start!", x/5, y*4/5, 1.0f, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
@@ -443,11 +443,7 @@ void render()
 
 	}
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
-	
-	float dpi_scale = cg_get_dpi_scale();
-	dpi_scale = 1;
-	//dpi_scale = window_size.x / (float) window_size.y;
-	printf("%f\n", dpi_scale);
+
 	char stagenum[20], lifenum[20];
 	sprintf(stagenum, "Stage: %d", stage);
 	sprintf(lifenum, "Life: %d", life);
