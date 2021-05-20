@@ -213,7 +213,6 @@ void update()
 		direc = 4;
 	} 
 	rotate_chracter(t, old_t,ntheta);
-	old_t = t;
 	
 	switch (stage) {
 		case 1:
@@ -870,6 +869,7 @@ int main(int argc, char* argv[])
 	{
 		glfwPollEvents();	// polling and processing of events
 		update();			// per-frame update
+		old_t = float(glfwGetTime());
 		render();			// per-frame render
 	}
 

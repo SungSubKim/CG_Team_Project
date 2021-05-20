@@ -1,12 +1,13 @@
 #pragma once
 #include <string>
 #include <vector>
+#define MGN 0.5f
 // s_center에 관한 정보, 장외로 나갔는지 판단하는 check_on_area함수
 struct square
 {
 	vec3 point;
-	GLint x_length;
-	GLint z_length;
+	GLfloat x_length;
+	GLfloat z_length;
 };
 vec3 old_s_center = vec3(0);
 vec3 old_e1_center = vec3(0);
@@ -16,13 +17,12 @@ bool e1collide = false;
 bool e2collide = false;
 bool e3collide = false;
 std::vector<struct square> divided_map1_land = {
-	{ vec3(0,0,0),128,72 },{ vec3(90,0,0),36,72 } };
+	{ vec3(-MGN,0,-MGN),128+2*MGN,72+2*MGN } };
 std::vector<struct square> divided_map1_obstacle = {
-	{ vec3(0,0,0),14,16 },{ vec3(0,0,0),25,13 },{ vec3(0,0,0),30,11 },
-{ vec3(0,0,0),35,8 },{ vec3(0,0,0),38,5 },{ vec3(0,0,0),40,3 }, { vec3(0,0,38),7,72-38 }, { vec3(0,0,41),14,72-41 },
-{ vec3(0,0,45),18,72-45 }, { vec3(0,0,50),18,72-50 }, { vec3(0,0,55),20,72-55 },
+	{ vec3(-MGN,0,-MGN),14+MGN,16+MGN },{ vec3(0,0,0),25,13 },{ vec3(0,0,0),30,11 },{ vec3(0,0,0),35,8 },{ vec3(0,0,0),38,5 },{ vec3(-MGN,0,-MGN),40+MGN,3+MGN },
+{ vec3(-MGN,0,38),7+MGN,72-38+MGN }, { vec3(0,0,41),14,72-41 },{ vec3(0,0,45),18,72-45 }, { vec3(0,0,50),18,72-50 }, { vec3(0,0,55),20,72-55 },
 { vec3(0,0,58),24,72-58 },{ vec3(0,0,61),29,MAP_Z-61 }, { vec3(0,0,63),33,MAP_Z-63 },
-{ vec3(0,0,65),33,MAP_Z-65 }, { vec3(0,0,69),39,MAP_Z-69 }};
+{ vec3(0,0,65),33,MAP_Z-65 }, { vec3(0-MGN,0,69),39+MGN,MAP_Z-69+MGN } };
 std::vector<struct square> divided_map2_land = {
 	{ vec3(0,0,0),36,72 },{ vec3(90,0,0),36,72 } };
 //장외 판정을 모든 사각형으로 나누어서한다.
@@ -45,56 +45,21 @@ void check_map1() {
 	bool onLand_old_e1 = false, onLand_now_e1 = false;
 
 	for (auto& s : divided_map1_land) {
-		if ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
-			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
-		{
-			onLand_old = true;
-		}
-		if ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length
-			&& s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length))
-		{
-			onLand_now = true;
-		}
+		onLand_old = (s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length && s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length);
+		onLand_now = ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length && s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length));
+		onLand_old_e1 = ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length));
+		onLand_now_e1 = ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length));
 	}
 
-	for (auto& s : divided_map1_land) {
-		if ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length
-			&& s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length))
-		{
-			onLand_old_e1 = true;
-		}
-		if ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length
-			&& s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length))
-		{
-			onLand_now_e1 = true;
-		}
-	}
 	bool onObstacle_old = false, onObstacle_now = false;
 	bool onObstacle_old_e1 = false, onObstacle_now_e1 = false;
 	for (auto& s : divided_map1_obstacle) {
-		if ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
-			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
-		{
-			onObstacle_old = true;
-		}
-		if ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length
-			&& s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length))
-		{
-			onObstacle_now = true;
-		}
-	}
-
-	for (auto& s : divided_map1_land) {
-		if ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length
-			&& s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length))
-		{
-			onObstacle_old_e1 = true;
-		}
-		if ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length
-			&& s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length))
-		{
-			onObstacle_now_e1 = true;
-		}
+		onObstacle_old = ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
+				&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length));
+		onObstacle_now = ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length
+				&& s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length));
+		onLand_old_e1 = ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length));
+		onLand_now_e1 = ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length));
 	}
 
 	if (pow((s_center.x - 69) / 25.0f, 2) + pow((s_center.z - 35) / 13.0f, 2) < 1)
