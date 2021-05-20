@@ -28,6 +28,7 @@ uniform float	shininess;
 uniform vec4	light_position, Ia, Id, Is;	// light
 uniform vec4	Ka, Kd, Ks;					// material properties
 uniform int before_game;
+
 vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 {
 	vec4 Ira = ambient*Ia;									// ambient reflection
@@ -71,9 +72,4 @@ void main()
 		fragColor = vec4(fragColor.rgb,fragColor.r) * color; // enable alpha blending
 	}
 	else fragColor = phong( l, n, h, iKd );
-	
-	
-	
-	
-	// TEX_SKY와 phong중 어느걸 사용할지를 sky에 따라 결정
 }
