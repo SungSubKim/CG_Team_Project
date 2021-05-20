@@ -20,7 +20,7 @@ uniform int		mode;
 uniform mat4	view_matrix;
 //uniform sampler2D TEX_MAP1, TEX_MAP2, TEX_MAP3;
 uniform sampler2D TEX_SKY, TEX_SNOW, SKY_LEFT, SKY_DOWN ,SKY_BACK, SKY_RIGHT, SKY_UP, SKY_FRONT, TITLETEX
-,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX;
+,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX,DIETEX;
 
 uniform bool use_texture,b_help;
 uniform vec4 ambient, diffuse, specular, emissive, color;
@@ -55,8 +55,13 @@ void main()
 			case 3:
 				fragColor = texture( HELPTEX3, tc );
 				return;
-			default:
+			case 4:
 				fragColor = texture( FINALTEX, tc );
+				return;
+			case 5:
+				fragColor = texture( DIETEX, tc );
+				return;
+			default:
 				return;
 		}
 	}

@@ -86,7 +86,7 @@ int check_map1(bool &fall, int stage) {
 		onObstacle_now_e1 = true;
 	if (pow((old_e1_center.x - 69) / 25.0f, 2) + pow((old_e1_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_old_e1 = true;
-	printf("%d %d \n", onObstacle_old, onObstacle_now);
+	//printf("%d %d \n", onObstacle_old, onObstacle_now);
 	if (!onObstacle_old && onObstacle_now) {
 		CopyMemory(s_center, old_s_center, sizeof(vec3));
 		
@@ -251,16 +251,19 @@ int check_collision(int life){
 		printf("geelo\n");
 		collide = true;
 		e1collide = true;
+		e1.visible = false;
 	}
 	if (e2.visible && !e2collide && xz_distance(e2.center, s_center) < 5.0f) {
 		printf("geelo\n");
 		collide = true;
 		e2collide = true;
+		e2.visible = false;
 	}
 	if (e3.visible && !e3collide && xz_distance(e3.center, s_center) < 5.0f) {
 		printf("geelo\n");
 		collide = true;
 		e3collide = true;
+		e3.visible = false;
 	}
 
 	if (collide) {
