@@ -257,7 +257,6 @@ void update()
 			break;
 		case 2:
 			stage = check_map2(isfall, 2);
-			//printf("next: %d\n", next);
 			if(getTriangle())
 				stage++;
 			break;
@@ -265,8 +264,6 @@ void update()
 			stage = check_map3(3);
 			break;
 	}
-	//stage clear¡∂∞«
-	//printf("%d %d\n", stage, next);
 	setStage(stage);
 	if (stage == 0)
 		stage++;
