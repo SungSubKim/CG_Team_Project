@@ -204,7 +204,7 @@ void update()
 			engine->play2D(falling_mp3_src);
 		}
 		float dt_fall = t - falling_start;
-		if (dt_fall > 2.5f) {
+		if (dt_fall > 1.5f) {
 			s_center = vec3(2.3f, 0, 20);
 			cam.view_matrix = view_matrix0;
 			isfall = false;
@@ -215,7 +215,7 @@ void update()
 			vec3 at = vec3(s_center.x, 0.5f*s_center.y, s_center.z);
 			getModel("Character").theta = ntheta;
 			cam.view_matrix = mat4::look_at(eye, at, vec3(0, 1, 0));
-			s_center.y = -4.9f * dt_fall * dt_fall;
+			s_center.y = -20 * dt_fall * dt_fall;
 		}
 	}
 	else {
@@ -252,11 +252,11 @@ void update()
 			break;
 		case 2:
 			check_map2(isfall);
-			if (isfall) {
+			/*if (isfall) {
 				engine->play2D(falling_mp3_src, false);
 				life--;
 			}
-			isfall = false;
+			isfall = false;*/
 			b_triangle = getTriangle();
 			break;
 		case 3:
