@@ -168,7 +168,7 @@ void update()
 	//e1_center.z -= 0.1f;
 	vec3 diff_e = normalize(direction_to_character1) * (t - old_t) * 10.0f;
 	diff_e.y = 0;
-	if (!isfall) {
+	if (!isfall && !b_help) {
 		if (difficulty == 1) {
 			if (e1_center.z - s_center.z < 0) {
 				if (e1_center.x - s_center.x > 0) {
@@ -204,7 +204,6 @@ void update()
 		if(!old_isfall) {
 			falling_start = t;
 			view_matrix0 = cam.view_matrix;
-			life--;
 
 			engine->play2D(falling_mp3_src);
 		}
@@ -213,6 +212,7 @@ void update()
 			s_center = vec3(2.3f, 0, 20);
 			cam.view_matrix = view_matrix0;
 			isfall = false;
+			life--;
 
 		}
 		else {
@@ -251,22 +251,22 @@ void update()
 	old_isfall = isfall;
 	switch (stage) {
 		case 1:
-			next = check_map1(isfall, 1);
 			enemy_num = check_to_enemy(direc, b_space);
+			stage = check_map1(isfall, 1, enemy_num);
 			life = check_collision(life);
 			break;
 		case 2:
-			next = check_map2(isfall, 2);
-			printf("next: %d\n", next);
-			b_triangle = getTriangle();
+			stage = check_map2(isfall, 2);
+			//printf("next: %d\n", next);
+			if(getTriangle())
+				stage++;
 			break;
 		case 3:
-			next = check_map3(3);
+			stage = check_map3(3);
 			break;
 	}
-	if ((stage == 1 && enemy_num == 0 && next == 2 )||(stage == 2 && b_triangle && next == 3)) stage++;
-	if (stage == 2 && next == 0) stage--; // 적용이 안됨
 	//stage clear조건
+	//printf("%d %d\n", stage, next);
 	setStage(stage);
 	if (stage == 0)
 		stage++;
