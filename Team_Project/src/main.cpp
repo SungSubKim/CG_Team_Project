@@ -189,8 +189,12 @@ void update()
 	//e1_center.z -= 0.1f;
 	vec3 diff_e = normalize(direction_to_character1) * (t - old_t) * 10.0f;
 	diff_e.y = 0;
-	if (!isfall && difficulty ==1)
-		e1_center = e1_center + diff_e;
+	if (!isfall) {
+		if (difficulty == 1)
+			e1_center = e1_center + diff_e;
+		else
+			e1_center = vec3(69 + 26 * cos(0.2f*t), 0, 35 + 14 * sin(0.2f*t));
+	}
 	//e2_center = e2_center + direction_to_character2 / 100.0f;
 	//e3_center = e3_center + direction_to_character3 / 100.0f;
 	
