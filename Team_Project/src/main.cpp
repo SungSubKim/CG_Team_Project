@@ -214,7 +214,7 @@ void update()
 
 		}
 		else {
-			vec3 eye = vec3(s_center.x + 100 * cos(ntheta), 40, s_center.z - 100 * sin(ntheta));
+			vec3 eye = vec3(s_center.x + 70 * cos(ntheta), 30, s_center.z - 70 * sin(ntheta));
 			vec3 at = vec3(s_center.x, 0.5f*s_center.y, s_center.z);
 			getModel("Character").theta = ntheta;
 			cam.view_matrix = mat4::look_at(eye, at, vec3(0, 1, 0));
