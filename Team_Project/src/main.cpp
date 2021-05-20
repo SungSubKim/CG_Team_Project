@@ -810,6 +810,8 @@ bool user_init()
 	models.push_back({ "../bin/mesh/Enemy1.obj", "Enemy1", vec3(96,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy2.obj", "Enemy2", vec3(16,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy3.obj", "Enemy3", vec3(8,0,32),(0.5) });
+	models.push_back({ "../bin/mesh/Boss.obj", "Boss",  vec3(MAP_X * 3 / 4, 0, MAP_Z / 2),(0.5) });
+	models.back().visible = false;
 	//model들의 정보를 저장한 models vector에 정보를 넣어준다. model.h의 자료구조를 참조
 	// model matrix의 정보도 바로 생성해서 삽입
 

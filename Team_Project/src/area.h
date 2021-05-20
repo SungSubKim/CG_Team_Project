@@ -138,6 +138,7 @@ void check_map2(bool &fall) {
 void check_map3() {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
+	model& boss_character = getModel("Boss");
 	vec3& s_center = model_character.center;
 	bool onLand_old = false, onLand_now = false;
 	for (auto& s : divided_map3) {
@@ -160,6 +161,33 @@ void check_map3() {
 	}
 	return;
 }
+
+void check_side() {
+	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
+	model& model_character = getModel("Character");
+	vec3& s_center = model_character.center;
+	bool onLand_old = false, onLand_now = false;
+	for (auto& s : divided_map3) {
+		if ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
+			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
+		{
+			onLand_old = true;
+		}
+		if ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length
+			&& s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length))
+		{
+			onLand_now = true;
+		}
+	}
+	if (onLand_old && !onLand_now) {
+		CopyMemory(s_center, old_s_center, sizeof(vec3));
+	}
+	else if (!onLand_old && !onLand_now) {
+		s_center = vec3(0);
+	}
+	return;
+}
+
 //실제로 나가면 s_center값의 초기화가 이루어지거나, 아니면 육지를 못벗어나게한다.
 inline float xz_distance(vec3 a, vec3 b) {
 	return  pow((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z),0.5f);
@@ -266,7 +294,6 @@ void setStage(int stage) {
 				getModel("Enemy1").visible = true;
 				break;
 			case 2:
-				//printf("hi");
 				getModel("Character").center = vec3(3, 0, 3);
 				getModel("Map1").visible = false;
 				getModel("Map2_1").visible = true;
@@ -278,6 +305,7 @@ void setStage(int stage) {
 				getModel("Map2_1").visible = false;
 				getModel("Map2_3").visible = false;
 				getModel("Map3").visible = true;
+				getModel("Boss").visible = true;
 				break;
 		}
 	}
