@@ -35,6 +35,7 @@ static const char* select_image_path = "../bin/images/character_select.png";
 static const char* select_image_path1 = "../bin/images/character_select_easy.png";
 static const char* select_image_path2 = "../bin/images/character_select_hard.png";
 static const char* final_image_path = "../bin/images/Final.png";
+static const char* die_image_path = "../bin/images/die.png";
 static const char* mp3_path = "../bin/sounds/CGMusic.mp3";
 static const char* attack_mp3_path = "../bin/sounds/attack.mp3";
 static const char* bell_mp3_path = "../bin/sounds/bell.mp3";
@@ -94,7 +95,7 @@ GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0,SELECTTEX1 = 0, SELECTTEX2 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX=0 ;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0,SELECTTEX1 = 0, SELECTTEX2 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX=0, DIETEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
@@ -107,14 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false;
-bool	show_texcoord = false;
-bool	b_wireframe = false;
-bool	b_space = false;
-bool	character_stop = false;
-bool	isfall = false;
-bool	old_isfall = false;
-bool	b_triangle = true;
+bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -276,6 +270,24 @@ void update()
 	setStage(stage);
 	if (stage == 0)
 		stage++;
+
+	static float die_t = 0;
+	if (life == 0) {
+		b_die = true;
+		b_help = true;
+		stage = 5;//DIETEX in fragment shader
+		if (!old_b_die)
+			die_t = (float)glfwGetTime();
+		if ((float)glfwGetTime() - die_t > 2) {
+			before_game = 0;
+			stage = 0;
+			life = 3;
+			b_die = false;
+			b_help = false;
+		}
+	}
+
+	old_b_die = b_die;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
@@ -348,6 +360,15 @@ void render()
 
 	float dpi_scale = cg_get_dpi_scale();
 
+	if (b_die) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, DIETEX);
+		glUniform1i(glGetUniformLocation(program, "DIETEX"), 0);
+		glBindVertexArray(vertex_array);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glfwSwapBuffers(window);
+		return;
+	}
 	if (before_game==0 || b_help) {
 		glActiveTexture(GL_TEXTURE0);
 		if (b_help) {
@@ -865,6 +886,7 @@ bool user_init()
 	SELECTTEX = create_texture(select_image_path, true); if (!SELECTTEX) return false;
 	SELECTTEX1 = create_texture(select_image_path1, true); if (!SELECTTEX1) return false;
 	SELECTTEX2 = create_texture(select_image_path2, true); if (!SELECTTEX2) return false;
+	DIETEX = create_texture(die_image_path, true); if (!DIETEX) return false;
 
 	engine = irrklang::createIrrKlangDevice();
 	if (!engine) return false;

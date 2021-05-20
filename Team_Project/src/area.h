@@ -247,15 +247,18 @@ int check_collision(int life){
 	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
 	bool collide = false;
 	
-	if (!e1collide && xz_distance(e1.center, s_center) < 5.0f) {
+	if (e1.visible && !e1collide && xz_distance(e1.center, s_center) < 5.0f) {
+		printf("geelo\n");
 		collide = true;
 		e1collide = true;
 	}
-	if (!e2collide && xz_distance(e2.center, s_center) < 5.0f) {
+	if (e2.visible && !e2collide && xz_distance(e2.center, s_center) < 5.0f) {
+		printf("geelo\n");
 		collide = true;
 		e2collide = true;
 	}
-	if (!e3collide && xz_distance(e3.center, s_center) < 5.0f) {
+	if (e3.visible && !e3collide && xz_distance(e3.center, s_center) < 5.0f) {
+		printf("geelo\n");
 		collide = true;
 		e3collide = true;
 	}
