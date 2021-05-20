@@ -35,7 +35,7 @@ std::vector<struct square> divided_map3 = {
 //장외 판정을 모든 사각형으로 나누어서한다.
 //판을 사각형으로 나누어 입력하였다. land는 map2의 육지 bridge는 map2의 다리
 
-void check_map1() {
+void check_map1(bool &fall) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	model& e1_character = getModel("Enemy1");
@@ -70,9 +70,12 @@ void check_map1() {
 		onObstacle_now_e1 = true;
 	if (pow((old_e1_center.x - 69) / 25.0f, 2) + pow((old_e1_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_old_e1 = true;
-	if ((!onObstacle_old && onObstacle_now) || (onLand_old && !onLand_now)) {
+	if (!onObstacle_old && onObstacle_now) {
 		CopyMemory(s_center, old_s_center, sizeof(vec3));
 		
+	}
+	else if(onLand_old && !onLand_now) {
+		fall = true;
 	}
 	if ((!onObstacle_old_e1 && onObstacle_now_e1) || (onLand_old_e1 && !onLand_now_e1)) {
 		CopyMemory(e1_center, old_e1_center, sizeof(vec3));
@@ -80,7 +83,7 @@ void check_map1() {
 	
 	return;
 }
-bool check_map2(bool fall) {
+void check_map2(bool &fall) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -111,25 +114,26 @@ bool check_map2(bool fall) {
 		}
 	}
 	if (!onBridge_now && !onLand_now) {
-		if (onBridge_old) {
-			//int interval = 250;
-			// 다리위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
-			fall = true;
-			/*
-			while (interval--) {
-				s_center.y--;
-				printf("%f\n", s_center.y);
-			} */ 
-			s_center.x = 0;
-			s_center.z = 0;
-			//s_center.y = 0;
-		}
-		else {
-			// 육지위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
-			CopyMemory(s_center, old_s_center, sizeof(vec3));
-		}
+		//if (onBridge_old) {
+		//	//int interval = 250;
+		//	// 다리위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
+		//	fall = true;
+		//	/*
+		//	while (interval--) {
+		//		s_center.y--;
+		//		printf("%f\n", s_center.y);
+		//	} */ 
+		//	s_center.x = 0;
+		//	s_center.z = 0;
+		//	//s_center.y = 0;
+		//}
+		//else {
+		//	// 육지위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
+		//	CopyMemory(s_center, old_s_center, sizeof(vec3));
+		//}
+		fall = true;
 	}
-	return fall;
+	return;
 }
 void check_map3() {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동

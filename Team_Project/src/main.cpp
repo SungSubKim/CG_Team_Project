@@ -109,6 +109,7 @@ bool	b_wireframe = false;
 bool	b_space = false;
 bool	character_stop = false;
 bool	isfall = false;
+bool	old_isfall = false;
 bool	b_triangle = true;
 std::vector<particle_t> particles;
 
@@ -146,9 +147,10 @@ void update()
 	cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar);
 
 	// build the model matrix for oscillating scale
+	static float falling_start = 0,ntheta =0;
 	float t = float(glfwGetTime());
 	int rate = 20; if (accel) rate *= 2;
-	float ntheta=0, ds=0;
+	float ds=0;
 	static bool b_triangle = false;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
@@ -182,46 +184,71 @@ void update()
 		}
 	}
 	//e1_center.z -= 0.1f;
-	e1_center = e1_center + normalize(direction_to_character1)*(t-old_t)*10.0f;
+	vec3 diff_e = normalize(direction_to_character1) * (t - old_t) * 10.0f;
+	diff_e.y = 0;
+	if (!isfall)
+		e1_center = e1_center + diff_e;
 	//e2_center = e2_center + direction_to_character2 / 100.0f;
 	//e3_center = e3_center + direction_to_character3 / 100.0f;
 	
 	
 	//model_duck2.pole = vec3(1, 0, 0);
 	//e1_center.x -= 0.01f;
-	
-	if (!character_stop)
-		ds = (t - old_t);
-	if (l) {
-		s_center.x -= ds * rate;
-		ntheta = PI / 2*2;
-		direc = 1;
+	static mat4 view_matrix0;
+	if (isfall) {
+		if(!old_isfall) {
+			falling_start = t;
+			view_matrix0 = cam.view_matrix;
+			life--;
+		}
+		float dt_fall = t - falling_start;
+		if (dt_fall > 2.5f) {
+			s_center = vec3(2.3f, 0, 20);
+			cam.view_matrix = view_matrix0;
+			isfall = false;
+		}
+		else {
+			vec3 eye = vec3(s_center.x + 100 * cos(ntheta), 40, s_center.z - 100 * sin(ntheta));
+			vec3 at = vec3(s_center.x, 0.5f*s_center.y, s_center.z);
+			getModel("Character").theta = ntheta;
+			cam.view_matrix = mat4::look_at(eye, at, vec3(0, 1, 0));
+			s_center.y = -4.9f * dt_fall * dt_fall;
+		}
 	}
-	else if (r) {
-		s_center.x += ds * rate;
-		ntheta = 0;
-		direc = 2;
+	else {
+		if (!character_stop)
+			ds = (t - old_t);
+		if (l) {
+			s_center.x -= ds * rate;
+			ntheta = PI / 2 * 2;
+			direc = 1;
+		}
+		else if (r) {
+			s_center.x += ds * rate;
+			ntheta = 0;
+			direc = 2;
+		}
+		else if (u) {
+			s_center.z -= ds * rate;
+			ntheta = PI / 2;
+			direc = 3;
+		}
+		else if (d) {
+			s_center.z += ds * rate;
+			ntheta = PI / 2 * 3;
+			direc = 4;
+		}
+		rotate_chracter(t, old_t, ntheta);
 	}
-	else if (u){
-		s_center.z -= ds * rate;
-		ntheta = PI / 2;
-		direc = 3;
-	}
-	else if (d){
-		s_center.z += ds * rate;
-		ntheta = PI / 2*3;
-		direc = 4;
-	} 
-	rotate_chracter(t, old_t,ntheta);
-	
+	old_isfall = isfall;
 	switch (stage) {
 		case 1:
-			check_map1();
+			check_map1(isfall);
 			enemy_num = check_to_enemy(direc, b_space);
 			life = check_collision(life);
 			break;
 		case 2:
-			isfall = check_map2(isfall);
+			check_map2(isfall);
 			if (isfall) {
 				engine->play2D(falling_mp3_src, false);
 				life--;
