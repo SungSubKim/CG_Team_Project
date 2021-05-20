@@ -45,21 +45,29 @@ void check_map1(bool &fall) {
 	bool onLand_old_e1 = false, onLand_now_e1 = false;
 
 	for (auto& s : divided_map1_land) {
-		onLand_old = (s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length && s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length);
-		onLand_now = ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length && s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length));
-		onLand_old_e1 = ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length));
-		onLand_now_e1 = ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length));
+		if (s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length && s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length)
+			onLand_old = true;
+		if ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length && s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length))
+			onLand_now = true;
+		if ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length))
+			onLand_old_e1 = true;
+		if ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length))
+			onLand_now_e1 = true;
 	}
 
 	bool onObstacle_old = false, onObstacle_now = false;
 	bool onObstacle_old_e1 = false, onObstacle_now_e1 = false;
-	for (auto& s : divided_map1_obstacle) {
-		onObstacle_old = ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
-				&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length));
-		onObstacle_now = ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length
-				&& s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length));
-		onLand_old_e1 = ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length));
-		onLand_now_e1 = ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length));
+	for (auto& obs : divided_map1_obstacle) {
+		if ((obs.point.x <= old_s_center.x && old_s_center.x <= obs.point.x + obs.x_length
+			&& obs.point.z <= old_s_center.z && old_s_center.z <= obs.point.z + obs.z_length))
+			onObstacle_old = true;
+		if ((obs.point.x <= s_center.x && s_center.x <= obs.point.x + obs.x_length
+			&& obs.point.z <= s_center.z && s_center.z <= obs.point.z + obs.z_length))
+			onObstacle_now = true;
+		if ((obs.point.x <= old_e1_center.x && old_e1_center.x <= obs.point.x + obs.x_length && obs.point.z <= old_e1_center.z && old_e1_center.z <= obs.point.z + obs.z_length))
+			onLand_old_e1 = true;
+		if ((obs.point.x <= e1_center.x && e1_center.x <= obs.point.x + obs.x_length && obs.point.z <= e1_center.z && e1_center.z <= obs.point.z + obs.z_length))
+			onLand_now_e1 = true;
 	}
 
 	if (pow((s_center.x - 69) / 25.0f, 2) + pow((s_center.z - 35) / 13.0f, 2) < 1)
@@ -70,6 +78,7 @@ void check_map1(bool &fall) {
 		onObstacle_now_e1 = true;
 	if (pow((old_e1_center.x - 69) / 25.0f, 2) + pow((old_e1_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_old_e1 = true;
+	printf("%d %d \n", onObstacle_old, onObstacle_now);
 	if (!onObstacle_old && onObstacle_now) {
 		CopyMemory(s_center, old_s_center, sizeof(vec3));
 		
