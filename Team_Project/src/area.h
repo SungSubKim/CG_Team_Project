@@ -249,7 +249,6 @@ bool getTriangle() {
 }
 void setStage(int stage) {
 	static int old_stage = 0;
-	//printf("%d\n", stage);
 	if (old_stage + 1 == stage) {
 		switch (stage) {
 			case 1:
@@ -269,9 +268,6 @@ void setStage(int stage) {
 				getModel("Map2_1").visible = true;
 				getModel("Map2_3").visible = true;
 				getModel("triangle").visible = true;
-				getModel("Enemy3").visible = true;
-				getModel("Enemy2").visible = true;
-				getModel("Enemy1").visible = true;
 				break;
 			default:
 				getModel("Character").center = vec3(3, 0, 3);

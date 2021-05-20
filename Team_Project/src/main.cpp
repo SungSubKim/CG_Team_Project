@@ -550,6 +550,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			before_game = 0;
 			stage = 0;
+			life = 3;
 		}
 		else if (key == GLFW_KEY_LEFT) {
 			l = true; r = false; u = false; d = false;
