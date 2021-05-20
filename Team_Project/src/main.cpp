@@ -32,6 +32,8 @@ static const char* help_image_path1 = "../bin/images/Map1.png";
 static const char* help_image_path2 = "../bin/images/Map2.png";
 static const char* help_image_path3 = "../bin/images/Map3.png";
 static const char* select_image_path = "../bin/images/character_select.png";
+static const char* select_image_path1 = "../bin/images/character_select_easy.png";
+static const char* select_image_path2 = "../bin/images/character_select_hard.png";
 static const char* final_image_path = "../bin/images/Final.png";
 static const char* mp3_path = "../bin/sounds/CGMusic.mp3";
 static const char* attack_mp3_path = "../bin/sounds/attack.mp3";
@@ -92,7 +94,7 @@ GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX=0 ;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0,SELECTTEX1 = 0, SELECTTEX2 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX=0 ;
 GLuint	mode;
 //*************************************
 // global variables
@@ -104,6 +106,7 @@ int		next = 0;
 int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
+int		difficulty = 0;
 bool	b_help = false;
 bool	show_texcoord = false;
 bool	b_wireframe = false;
@@ -167,27 +170,35 @@ void update()
 	vec3& direction_to_character3 = s_center - e3_center;
 	
 	float distance = xz_distance(s_center, e1_center);
-	if (e1_center.z - s_center.z < 0) {
-		if (e1_center.x - s_center.x > 0) {
-			model_duck1.theta = PI / 2 - atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
-		}
-		else {
-			model_duck1.theta = PI / 2 + atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
-		}
-	}
-	else {
-		if (e1_center.x - s_center.x > 0) {
-			model_duck1.theta = atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)))-PI/2;
-		}
-		else {
-			model_duck1.theta = -atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
-		}
-	}
+	
 	//e1_center.z -= 0.1f;
 	vec3 diff_e = normalize(direction_to_character1) * (t - old_t) * 10.0f;
 	diff_e.y = 0;
-	if (!isfall)
-		e1_center = e1_center + diff_e;
+	if (!isfall) {
+		if (difficulty == 1) {
+			if (e1_center.z - s_center.z < 0) {
+				if (e1_center.x - s_center.x > 0) {
+					model_duck1.theta = PI / 2 - atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
+				}
+				else {
+					model_duck1.theta = PI / 2 + atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
+				}
+			}
+			else {
+				if (e1_center.x - s_center.x > 0) {
+					model_duck1.theta = atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
+				}
+				else {
+					model_duck1.theta = -atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
+				}
+			}
+			e1_center = e1_center + diff_e;
+		}
+		else {
+			e1_center = vec3(69 + 26 * cos(0.2f * t), 0, 35 + 14 * sin(0.2f * t));
+			model_duck1.theta = PI/2.0f -0.2f * t;
+		}
+	}
 	//e2_center = e2_center + direction_to_character2 / 100.0f;
 	//e3_center = e3_center + direction_to_character3 / 100.0f;
 	
@@ -211,7 +222,7 @@ void update()
 
 		}
 		else {
-			vec3 eye = vec3(s_center.x + 100 * cos(ntheta), 40, s_center.z - 100 * sin(ntheta));
+			vec3 eye = vec3(s_center.x + 70 * cos(ntheta), 30, s_center.z - 70 * sin(ntheta));
 			vec3 at = vec3(s_center.x, 0.5f*s_center.y, s_center.z);
 			getModel("Character").theta = ntheta;
 			cam.view_matrix = mat4::look_at(eye, at, vec3(0, 1, 0));
@@ -260,7 +271,7 @@ void update()
 			break;
 	}
 	if ((stage == 1 && enemy_num == 0 && next == 2 )||(stage == 2 && b_triangle && next == 3)) stage++;
-	if (stage == 2 && next == 0) stage--; // 적용
+	if (stage == 2 && next == 0) stage--; // 적용이 안됨
 	//stage clear조건
 	setStage(stage);
 	if (stage == 0)
@@ -371,7 +382,10 @@ void render()
 	}
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, SELECTTEX);
+		if(difficulty ==0)
+			glBindTexture(GL_TEXTURE_2D, SELECTTEX1);
+		else
+			glBindTexture(GL_TEXTURE_2D, SELECTTEX2);
 		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
 		glBindVertexArray(vertex_array);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -636,7 +650,7 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 	{
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
 		ivec2 npos2 = converted_loc(pos.x, pos.y, window_size);
-		printf("%f %f %d %d\n", pos.x, pos.y, npos2.x, npos2.y);
+		//printf("%f %f %d %d\n", pos.x, pos.y, npos2.x, npos2.y);
 		if (before_game == 0) {
 			if (894 < npos2.x && npos2.x < 1181 && 64 < npos2.y && npos2.y < 150)
 				before_game++;
@@ -652,12 +666,18 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 				hani.pMesh = load_model(hani.path);
 				models[6] = hani;
 			}
-			if (693 < npos2.x && npos2.x < 1018 && 124 < npos2.y && npos2.y < 585) {
+			else if (693 < npos2.x && npos2.x < 1018 && 124 < npos2.y && npos2.y < 585) {
 				before_game++;
 				delete models[6].pMesh;
 				model hani = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
 				hani.pMesh = load_model(hani.path);
 				models[6] = hani;
+			}
+			else if (1055 < npos2.x && npos2.x < 1219 && 236 < npos2.y && npos2.y < 326) {
+				difficulty = 0;
+			}
+			else if (1055 < npos2.x && npos2.x < 1219 && 380< npos2.y && npos2.y < 471) {
+				difficulty =1;
 			}
 			return;
 		}
@@ -843,6 +863,8 @@ bool user_init()
 	HELPTEX3 = create_texture(help_image_path3, true); if (!HELPTEX3) return false;
 	FINALTEX = create_texture(final_image_path, true); if (!FINALTEX) return false;
 	SELECTTEX = create_texture(select_image_path, true); if (!SELECTTEX) return false;
+	SELECTTEX1 = create_texture(select_image_path1, true); if (!SELECTTEX1) return false;
+	SELECTTEX2 = create_texture(select_image_path2, true); if (!SELECTTEX2) return false;
 
 	engine = irrklang::createIrrKlangDevice();
 	if (!engine) return false;
