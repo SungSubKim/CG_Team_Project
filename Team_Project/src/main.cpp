@@ -200,12 +200,15 @@ void update()
 			falling_start = t;
 			view_matrix0 = cam.view_matrix;
 			life--;
+
+			engine->play2D(falling_mp3_src);
 		}
 		float dt_fall = t - falling_start;
 		if (dt_fall > 2.5f) {
 			s_center = vec3(2.3f, 0, 20);
 			cam.view_matrix = view_matrix0;
 			isfall = false;
+
 		}
 		else {
 			vec3 eye = vec3(s_center.x + 100 * cos(ntheta), 40, s_center.z - 100 * sin(ntheta));
