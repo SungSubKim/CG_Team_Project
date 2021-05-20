@@ -100,6 +100,7 @@ float	alpha = 1.0f;
 int		frame = 0;		// index of rendering frames
 int		direc = 0;
 int		stage = 0;
+int		next = 0;
 int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
@@ -133,7 +134,6 @@ float min(float a, float b) {
 void rotate_chracter(float t, float old_t, float ntheta);
 void update()
 {
-	
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
 	glUniform1i(glGetUniformLocation(program, "b_help"), b_help);
@@ -204,7 +204,7 @@ void update()
 			engine->play2D(falling_mp3_src);
 		}
 		float dt_fall = t - falling_start;
-		if (dt_fall > 2.5f) {
+		if (dt_fall > 1.5f) {
 			s_center = vec3(2.3f, 0, 20);
 			cam.view_matrix = view_matrix0;
 			isfall = false;
@@ -215,7 +215,7 @@ void update()
 			vec3 at = vec3(s_center.x, 0.5f*s_center.y, s_center.z);
 			getModel("Character").theta = ntheta;
 			cam.view_matrix = mat4::look_at(eye, at, vec3(0, 1, 0));
-			s_center.y = -4.9f * dt_fall * dt_fall;
+			s_center.y = -20 * dt_fall * dt_fall;
 		}
 	}
 	else {
@@ -246,24 +246,21 @@ void update()
 	old_isfall = isfall;
 	switch (stage) {
 		case 1:
-			check_map1(isfall);
+			next = check_map1(isfall, 1);
 			enemy_num = check_to_enemy(direc, b_space);
 			life = check_collision(life);
 			break;
 		case 2:
-			check_map2(isfall);
-			if (isfall) {
-				engine->play2D(falling_mp3_src, false);
-				life--;
-			}
-			isfall = false;
+			next = check_map2(isfall, 2);
+			printf("next: %d\n", next);
 			b_triangle = getTriangle();
 			break;
 		case 3:
-			check_map3();
+			next = check_map3(3);
 			break;
 	}
-	if ((stage == 1 && enemy_num == 0 )||(stage == 2 && b_triangle)) stage++;
+	if ((stage == 1 && enemy_num == 0 && next == 2 )||(stage == 2 && b_triangle && next == 3)) stage++;
+	if (stage == 2 && next == 0) stage--; // 적용
 	//stage clear조건
 	setStage(stage);
 	if (stage == 0)

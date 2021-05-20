@@ -35,7 +35,7 @@ std::vector<struct square> divided_map3 = {
 //장외 판정을 모든 사각형으로 나누어서한다.
 //판을 사각형으로 나누어 입력하였다. land는 map2의 육지 bridge는 map2의 다리
 
-void check_map1(bool &fall) {
+int check_map1(bool &fall, int stage) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	model& e1_character = getModel("Enemy1");
@@ -43,12 +43,15 @@ void check_map1(bool &fall) {
 	vec3& e1_center = e1_character.center;
 	bool onLand_old = false, onLand_now = false;
 	bool onLand_old_e1 = false, onLand_now_e1 = false;
+	bool map1right = false;
 
 	for (auto& s : divided_map1_land) {
-		onLand_old = (s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length && s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length);
-		onLand_now = ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length && s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length));
-		onLand_old_e1 = ((s.point.x <= old_e1_center.x && old_e1_center.x <= s.point.x + s.x_length && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length));
-		onLand_now_e1 = ((s.point.x <= e1_center.x && e1_center.x <= s.point.x + s.x_length && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length));
+		onLand_old = (s.point.x <= old_s_center.x && s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length);
+		onLand_now = (s.point.x <= s_center.x && s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length);
+		onLand_old_e1 = (s.point.x <= old_e1_center.x && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length);
+		onLand_now_e1 = (s.point.x <= e1_center.x && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length);
+		map1right = (old_s_center.x <= s.point.x + s.x_length && s_center.x <= s.point.x + s.x_length && old_e1_center.x <= s.point.x + s.x_length && e1_center.x <= s.point.x + s.x_length);
+		if (!map1right) stage++;
 	}
 
 	bool onObstacle_old = false, onObstacle_now = false;
@@ -81,13 +84,15 @@ void check_map1(bool &fall) {
 		CopyMemory(e1_center, old_e1_center, sizeof(vec3));
 	}
 	
-	return;
+	return stage;
 }
-void check_map2(bool &fall) {
+
+int check_map2(bool &fall, int stage) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
-	bool onLand_old = false,onLand_now = false;
+	bool onLand_old = false, onLand_now = false;
+	bool map2left = false, map2right = false;
 	for (auto& s : divided_map2_land) {
 		if ((s.point.x <= old_s_center.x  && old_s_center.x <= s.point.x + s.x_length
 			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
@@ -99,6 +104,14 @@ void check_map2(bool &fall) {
 		{
 			onLand_now = true;
 		}
+		if (s.point.x <= old_s_center.x && s.point.x <= s_center.x) {
+			map2right = true;
+		}
+		if (old_s_center.x <= s.point.x + s.x_length && s_center.x <= s.point.x + s.x_length) {
+			map2left = true;
+		}
+		if (map2left) stage--;
+		if (map2right) stage++;
 	}
 	bool onBridge_old = false, onBridge_now= false;
 	for (auto& s : divided_map2_bridge) {
@@ -114,29 +127,12 @@ void check_map2(bool &fall) {
 		}
 	}
 	if (!onBridge_now && !onLand_now) {
-		//if (onBridge_old) {
-		//	//int interval = 250;
-		//	// 다리위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
-		//	fall = true;
-		//	/*
-		//	while (interval--) {
-		//		s_center.y--;
-		//		printf("%f\n", s_center.y);
-		//	} */ 
-		//	s_center.x = 0;
-		//	s_center.z = 0;
-		//	//s_center.y = 0;
-		//}
-		//else {
-		//	// 육지위에서 떨어짐, 과거에는 다리위에 있었으나 영역밖으로 이동하려할때
-		//	CopyMemory(s_center, old_s_center, sizeof(vec3));
-		//}
 		fall = true;
 	}
-	return;
+	return stage;
 }
-void check_map3() {
-	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
+
+int check_map3(int stage) {
 	model& model_character = getModel("Character");
 	model& boss_character = getModel("Boss");
 	vec3& s_center = model_character.center;
@@ -159,7 +155,7 @@ void check_map3() {
 	else if (!onLand_old && !onLand_now) {
 		s_center = vec3(0);
 	}
-	return;
+	return stage;
 }
 
 void check_side() {
@@ -238,17 +234,14 @@ int check_collision(int life){
 	bool collide = false;
 	
 	if (!e1collide && xz_distance(e1.center, s_center) < 5.0f) {
-		printf("geelo\n");
 		collide = true;
 		e1collide = true;
 	}
 	if (!e2collide && xz_distance(e2.center, s_center) < 5.0f) {
-		printf("geelo\n");
 		collide = true;
 		e2collide = true;
 	}
 	if (!e3collide && xz_distance(e3.center, s_center) < 5.0f) {
-		printf("geelo\n");
 		collide = true;
 		e3collide = true;
 	}
