@@ -19,16 +19,17 @@ uniform int		mode;
 //sky변수의 추가 이것에 따라 어떤 값을 fragColor로 사용할지 결정
 uniform mat4	view_matrix;
 //uniform sampler2D TEX_MAP1, TEX_MAP2, TEX_MAP3;
-uniform sampler2D TEX_SKY, TEX_SNOW, SKY_LEFT, SKY_DOWN ,SKY_BACK, SKY_RIGHT, SKY_UP, SKY_FRONT, TITLETEX;
+uniform sampler2D TEX_SKY, TEX_SNOW, SKY_LEFT, SKY_DOWN ,SKY_BACK, SKY_RIGHT, SKY_UP, SKY_FRONT, TITLETEX
+,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX;
 
-uniform bool use_texture;
+uniform bool use_texture,b_help;
 uniform vec4 ambient, diffuse, specular, emissive, color;
 
 uniform float	shininess;
 uniform vec4	light_position, Ia, Id, Is;	// light
 uniform vec4	Ka, Kd, Ks;					// material properties
-uniform int before_game;
 
+uniform int before_game, stage;
 vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 {
 	vec4 Ira = ambient*Ia;									// ambient reflection
@@ -42,6 +43,22 @@ void main()
 	if (before_game <3) {
 		fragColor = texture( TITLETEX, tc );
 		return;
+	}
+	if (b_help) {
+		switch( stage) {
+			case 1:
+				fragColor = texture( HELPTEX1, tc );
+				return;
+			case 2:
+				fragColor = texture( HELPTEX2, tc );
+				return;
+			case 3:
+				fragColor = texture( HELPTEX3, tc );
+				return;
+			default:
+				fragColor = texture( FINALTEX, tc );
+				return;
+		}
 	}
 	vec4 lpos = view_matrix*light_position;
 	vec3 n = normalize(norm);	// norm interpolated via rasterizer should be normalized again here
