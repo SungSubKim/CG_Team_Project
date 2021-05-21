@@ -108,7 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false, triangle_added = false;
+bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false;
 
 std::vector<particle_t> particles;
 
@@ -149,7 +149,7 @@ void update()
 	static float falling_start = 0, ntheta = 0;
 	static bool isfall = false, old_isfall = false;
 	float t = float(glfwGetTime());
-	int rate = 20; if (accel) rate *= 2;
+	int rate = 20; if (accel) rate *= 2; if (b_triangle) rate -= 5;
 	float ds = 0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
@@ -248,7 +248,7 @@ void update()
 		stage = check_map3(isfall, 3);
 		break;
 	}
-	b_triangle = getTriangle(b_triangle, b_ability_to_get);
+	b_triangle = getTriangle(b_triangle) && b_ability_to_get;
 	counter += t - old_t;
 	//stage clear조건
 	if (stage == 3) {
@@ -284,7 +284,7 @@ void update()
 			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
 			getModel("triangle").visible = false;
 			b_triangle = false;
-			b_ability_to_get = true;
+			//b_ability_to_get = true;
 			triangle_added = false;
 		}
 	}
@@ -621,7 +621,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
 			getModel("triangle").visible = false;
 			b_triangle = false;
-			b_ability_to_get = true;
+			//b_ability_to_get = true;
 			triangle_added = false;
 		}
 		else if (key == GLFW_KEY_LEFT) {
@@ -646,8 +646,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_T) {
 			model& m = getModel("triangle");
-			b_triangle = false;
-			b_ability_to_get = false;
+			//b_triangle = false;
+			//b_ability_to_get = false;
+			b_ability_to_get = true;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			accel = 1;
@@ -659,6 +660,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_RELEASE) {
 		if (key == GLFW_KEY_LEFT) {
 			l = false;
+		}
+		else if (key == GLFW_KEY_T) {
+			b_ability_to_get = false;
 		}
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
 			b_help = false;

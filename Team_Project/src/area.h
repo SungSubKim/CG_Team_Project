@@ -456,23 +456,17 @@ int check_collision(int life) {
 
 	return life;
 }
-bool getTriangle(bool b_triangle, bool& b_ability) {
-	int stage = 2;
+bool getTriangle(bool b_triangle) {
+	bool res = false;
 	if (b_triangle)
 		return true;
-	bool res = false;
 	vec3& s_center = getModel("Character").center;
 
 	vec3& t_center = getModel("triangle").center;
 	//printf("%f \n", xz_distance(vec3(120, 0, 35), s_center));
 	if (xz_distance(t_center, s_center) < 7) {
-		if (b_ability) {
-			res = true;
-			b_ability = false;
-		}
+		res = true;
 	}
-	else
-		b_ability = true;
 	return res;
 }
 void setStage(int stage, bool b_triangle) {
