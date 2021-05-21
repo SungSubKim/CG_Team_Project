@@ -17,9 +17,9 @@ void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, 
 
 //*************************************
 // global constants
-static const char*	window_name = "Team project - Woori's Adventure";
-static const char*	vert_shader_path = "../bin/shaders/model.vert";
-static const char*	frag_shader_path = "../bin/shaders/model.frag";
+static const char* window_name = "Team project - Woori's Adventure";
+static const char* vert_shader_path = "../bin/shaders/model.vert";
+static const char* frag_shader_path = "../bin/shaders/model.frag";
 static const char* skybox_left_path = "../bin/images/Background.png";
 static const char* skybox_down_path = "../bin/images/Background_floor.png";
 static const char* skybox_back_path = "../bin/images/Background.png";
@@ -74,10 +74,10 @@ struct material_t
 	float	shininess = 100000.0f;
 };
 
-mat4 model_matrix_background=mat4::translate(0,0.0f,-250.0f)*mat4::scale(500.0f,500.0f,100.0f);
+mat4 model_matrix_background = mat4::translate(0, 0.0f, -250.0f) * mat4::scale(500.0f, 500.0f, 100.0f);
 
 // window objects
-GLFWwindow*	window = nullptr;
+GLFWwindow* window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
 
 //*******************************************************************
@@ -90,12 +90,12 @@ irrklang::ISoundSource* falling_mp3_src = nullptr;
 
 //*************************************
 // OpenGL objects
-GLuint	program	= 0;	// ID holder for GPU program
+GLuint	program = 0;	// ID holder for GPU program
 GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0,SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0,SELECTTEX1 = 0, SELECTTEX2 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX=0, DIETEX = 0;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0, SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0, SELECTTEX1 = 0, SELECTTEX2 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX = 0, DIETEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
@@ -108,7 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_ability_to_get = true, b_die = false, old_b_die = false, bell = false, opacity = false;
+bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -117,8 +117,8 @@ std::vector<particle_t> particles;
 camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
-float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
-float theta0=0;
+float old_t = 0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
+float theta0 = 0;
 float counter = 0.0f;
 mat4 model_matrix0;
 light_t		light;
@@ -128,28 +128,28 @@ int frame_counter = 0;
 float min(float a, float b) {
 	return a < b ? a : b;
 }
-	//float& theta = getModel("Character").theta;
-void rotate_chracter(float t, float old_t, float ntheta);
+//float& theta = getModel("Character").theta;
+void rotate_character(float t, float old_t, float ntheta);
 void update()
 {
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
 	glUniform1i(glGetUniformLocation(program, "b_help"), b_help);
 	glUniform1i(glGetUniformLocation(program, "stage"), stage);
-	if (before_game < 3) 
+	if (before_game < 3)
 		return;
-	
+
 
 	// update projection matrix
 	cam.aspect_ratio = window_size.x / float(window_size.y);
 	cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar);
 
 	// build the model matrix for oscillating scale
-	static float falling_start = 0,ntheta =0;
+	static float falling_start = 0, ntheta = 0;
 	static bool isfall = false, old_isfall = false;
 	float t = float(glfwGetTime());
 	int rate = 20; if (accel) rate *= 2;
-	float ds=0;
+	float ds = 0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -161,29 +161,29 @@ void update()
 
 
 	vec3& e1_center = model_duck1.center;
-	
+
 	//float distance = xz_distance(s_center, e1_center);
-	
+
 	//e1_center.z -= 0.1f;
-	
-	if (!isfall) {
+
+	if (!isfall && !b_help) {
 		if (difficulty == 1) {
-			trace_enemy_direction(model_character, model_duck1,t,old_t);			
+			trace_enemy_direction(model_character, model_duck1, t, old_t);
 		}
 		else {
 			e1_center = vec3(69 + 26 * cos(0.2f * t), 0, 35 + 14 * sin(0.2f * t));
-			model_duck1.theta = PI/2.0f -0.2f * t;
+			model_duck1.theta = PI / 2.0f - 0.2f * t;
 		}
 	}
 	//e2_center = e2_center + direction_to_character2 / 100.0f;
 	//e3_center = e3_center + direction_to_character3 / 100.0f;
-	
-	
+
+
 	//model_duck2.pole = vec3(1, 0, 0);
 	//e1_center.x -= 0.01f;
 	static mat4 view_matrix0;
 	if (isfall) {
-		if(!old_isfall) {
+		if (!old_isfall) {
 			falling_start = t;
 			view_matrix0 = cam.view_matrix;
 
@@ -199,7 +199,7 @@ void update()
 		}
 		else {
 			vec3 eye = vec3(s_center.x + 70 * cos(ntheta), 30, s_center.z - 70 * sin(ntheta));
-			vec3 at = vec3(s_center.x, 0.5f*s_center.y, s_center.z);
+			vec3 at = vec3(s_center.x, 0.5f * s_center.y, s_center.z);
 			getModel("Character").theta = ntheta;
 			cam.view_matrix = mat4::look_at(eye, at, vec3(0, 1, 0));
 			s_center.y = -20 * dt_fall * dt_fall;
@@ -228,26 +228,27 @@ void update()
 			ntheta = PI / 2 * 3;
 			direc = 4;
 		}
-		rotate_chracter(t, old_t, ntheta);
+		rotate_character(t, old_t, ntheta);
 	}
 	old_isfall = isfall;
+	bool falling_play = false;
 	switch (stage) {
-		case 1:
-			enemy_num = check_to_enemy(direc, b_space);
-			stage = check_map1(isfall, 1, enemy_num);
-			life = check_collision(life);
-			break;
-		case 2:
-			stage = check_map2(isfall, 2);
-			b_triangle = getTriangle(b_triangle,b_ability_to_get);
-			break;
-		case 3:
-			stage = check_map3(isfall,3);
-			break;
+	case 1:
+		enemy_num = check_to_enemy(direc, b_space);
+		stage = check_map1(isfall, 1, enemy_num, falling_play);
+		if (falling_play)
+			engine->play2D(falling_mp3_src);
+		life = check_collision(life);
+		break;
+	case 2:
+		stage = check_map2(isfall, 2);
+		break;
+	case 3:
+		stage = check_map3(isfall, 3);
+		break;
 	}
+	b_triangle = getTriangle(b_triangle, b_ability_to_get);
 	counter += t - old_t;
-	if ((stage == 1 && enemy_num == 0 && next == 2) || (stage == 2 && b_triangle && next == 3)) stage++;
-	if (stage == 2 && next == 0) stage--; // 적용이 안됨
 	//stage clear조건
 	if (stage == 3) {
 		bell = bell_ring(t, old_t);
@@ -261,7 +262,7 @@ void update()
 
 	}
 	//stage clear조
-	setStage(stage);
+	setStage(stage, b_triangle);
 	if (stage == 0)
 		stage++;
 
@@ -282,7 +283,7 @@ void update()
 	}
 	old_b_die = b_die;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
-	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
+	CopyMemory(old_e1_center, e1_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
 	if (b_triangle) {
 		float theta = model_character.theta;
@@ -291,56 +292,56 @@ void update()
 	}
 	for (auto& m : models)
 		m.update_matrix();
-	
+
 	//center와 theta의 정보를 캐릭터매트릭스에 반영한다.
-	
+
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "view_matrix");			if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
 	uloc = glGetUniformLocation(program, "projection_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.projection_matrix);
-	
+
 	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
 	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
-	
+
 	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
 	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 
-	
+
 	//화면 skybox 부분
 	// glBindTexture(SKY_XXX) : 이 방향대로 붙어있으니 텍스처를 바꾸고싶으면 여기서 바꾸면 됨
-	glActiveTexture(GL_TEXTURE1);								
-	glBindTexture(GL_TEXTURE_2D, SKY_LEFT); 
-	
-	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
-	
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
 
-	glActiveTexture(GL_TEXTURE2);								
+	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
+
+
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
 	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
-	
 
-	glActiveTexture(GL_TEXTURE3);								
+
+	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
 	glUniform1i(glGetUniformLocation(program, "SKY_BACK"), 3);
-	
-	glActiveTexture(GL_TEXTURE4);								
-	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
-	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);		
-	
 
-	glActiveTexture(GL_TEXTURE5);								
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
+	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
+
+
+	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, SKY_UP);
 	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
-	
 
-	glActiveTexture(GL_TEXTURE6);								
+
+	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
 	glUniform1i(glGetUniformLocation(program, "SKY_FRONT"), 6);
-	
+
 	// select the texture slot to bind
 	for (auto& p : particles) {
 		p.update(s_center.x, s_center.z, b_space, direc);
@@ -366,26 +367,26 @@ void render()
 		glfwSwapBuffers(window);
 		return;
 	}
-	if (before_game==0 || b_help) {
+	if (before_game == 0 || b_help) {
 		glActiveTexture(GL_TEXTURE0);
 		if (b_help) {
 			switch (stage) {
-				case 1:
-					glBindTexture(GL_TEXTURE_2D, HELPTEX1);
-					glUniform1i(glGetUniformLocation(program, "HELPTEX1"), 0);
-					break;
-				case 2:
-					glBindTexture(GL_TEXTURE_2D, HELPTEX2);
-					glUniform1i(glGetUniformLocation(program, "HELPTEX2"), 0);
-					break;
-				case 3:
-					glBindTexture(GL_TEXTURE_2D, HELPTEX3);
-					glUniform1i(glGetUniformLocation(program, "HELPTEX3"), 0);
-					break;
-				default : //final
-					glBindTexture(GL_TEXTURE_2D, FINALTEX);
-					glUniform1i(glGetUniformLocation(program, "FINALTEX"), 0);
-					break;
+			case 1:
+				glBindTexture(GL_TEXTURE_2D, HELPTEX1);
+				glUniform1i(glGetUniformLocation(program, "HELPTEX1"), 0);
+				break;
+			case 2:
+				glBindTexture(GL_TEXTURE_2D, HELPTEX2);
+				glUniform1i(glGetUniformLocation(program, "HELPTEX2"), 0);
+				break;
+			case 3:
+				glBindTexture(GL_TEXTURE_2D, HELPTEX3);
+				glUniform1i(glGetUniformLocation(program, "HELPTEX3"), 0);
+				break;
+			default: //final
+				glBindTexture(GL_TEXTURE_2D, FINALTEX);
+				glUniform1i(glGetUniformLocation(program, "FINALTEX"), 0);
+				break;
 			}
 		}
 
@@ -400,7 +401,7 @@ void render()
 	}
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
-		if(difficulty ==0)
+		if (difficulty == 0)
 			glBindTexture(GL_TEXTURE_2D, SELECTTEX1);
 		else
 			glBindTexture(GL_TEXTURE_2D, SELECTTEX2);
@@ -416,25 +417,25 @@ void render()
 		float scale_x = x / 1280.0f, scale_y = y / 720.0f;
 		float scale = min(scale_x, scale_y);
 
-		render_text("** How to play this game **", x/4, y/6, 0.8f*scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press direction keys to move the character.", x/6, y*2/6, 0.8f*scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to fire the snowflakes.", x/6, y*3/6, 0.8f*scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to start!", x/5, y*4/5, 1.0f*scale, vec4(1, 1, 0, alpha), dpi_scale);
+		render_text("** How to play this game **", x / 4, y / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press direction keys to move the character.", x / 6, y * 2 / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to fire the snowflakes.", x / 6, y * 3 / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to start!", x / 5, y * 4 / 5, 1.0f * scale, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
 	}
 
 	GLint uloc;
-	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
+	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false);
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	mode = 0;
 	float alpha = 0.3f;
 	//false를 넣어준다.
-	if (opacity)
+	/*if (opacity)
 		printf("true\n");
 	else
-		printf("false\n");
-	int model_number=0;
+		printf("false\n");*/
+	int model_number = 0;
 	for (auto& model : models) {
 		model_number++;
 		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
@@ -456,7 +457,7 @@ void render()
 			//printf("%lf\n", g.mat->textures.ambient.id);
 			if (g.mat->textures.diffuse) {
 				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 
+				glUniform1i(glGetUniformLocation(program, "TEX"), 0);
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			}
 			else {
@@ -466,7 +467,7 @@ void render()
 				glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
 				//uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, vec4(1.0f,1.0f,1.0f,1.0f));
 				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
-				
+
 				glUniform1i(glGetUniformLocation(program, "opacity"), opacity);
 				glUniform1i(glGetUniformLocation(program, "model_number"), model_number);
 			}
@@ -481,42 +482,42 @@ void render()
 	//printf("%lf\n", g.mat->textures.ambient.id);
 	uloc = glGetUniformLocation(program, "sky");			if (uloc > -1) glUniform1i(uloc, true);
 	glBindVertexArray(vertex_array);
-	
+
 	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
 
-	model_matrix_background = mat4::translate(100,100,-250)*mat4::scale(300.0f, 300.0f, 100.0f); 
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
+	model_matrix_background = mat4::translate(100, 100, -250) * mat4::scale(300.0f, 300.0f, 100.0f);
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 6;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 3;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(-200, 100, 50)* mat4::rotate(vec3(0,1,0),PI/2)* mat4::scale(300.0f, 300.0f, 100.0f);
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
+	model_matrix_background = mat4::translate(-200, 100, 50) * mat4::rotate(vec3(0, 1, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 1;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(400, 100, 50) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 4;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1,0,0),-PI/2)*mat4::scale(300.0f, 300.0f, 100.0f);
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
+	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 2;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	model_matrix_background = mat4::translate(100, 400, 50) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
-	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background); 
+	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 5;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -528,7 +529,7 @@ void render()
 	{
 		mat4 translate_matrix = mat4::translate(vec3(p.pos.x, 15.0f, p.pos.y));
 		mat4 scale_matrix = mat4::scale(p.scale);
-		mat4 model_matrix = translate_matrix *scale_matrix;
+		mat4 model_matrix = translate_matrix * scale_matrix;
 
 		glActiveTexture(GL_TEXTURE0);		// select the texture slot to bind
 		glBindTexture(GL_TEXTURE_2D, SNOWTEX);
@@ -538,7 +539,7 @@ void render()
 		uloc = glGetUniformLocation(program, "snow");			if (uloc > -1) glUniform1i(uloc, true);
 		uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
 		uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix);
-		
+
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	}
@@ -578,7 +579,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	if (action == GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		if (before_game <3) {
+		if (before_game == 2) {
 			if (key == GLFW_KEY_SPACE)
 				before_game++;
 			return;
@@ -592,7 +593,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_C) {
 			model& m = getModel("Character");
-			printf("%f %f %f\n", m.center.x,m.center.z,m.center.y);
+			printf("%f %f %f\n", m.center.x, m.center.z, m.center.y);
 		}
 		else if (key == GLFW_KEY_D)
 		{
@@ -675,6 +676,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 void mouse(GLFWwindow* window, int button, int action, int mods)
 {
+	static int cnt = 0;
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
@@ -683,9 +685,13 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 		if (before_game == 0) {
 			if (894 < npos2.x && npos2.x < 1181 && 64 < npos2.y && npos2.y < 150)
 				before_game++;
+			cnt = 2;
 			return;
 		}
 		if (before_game == 1) {
+			cnt--;
+			if (cnt > 0)
+				return;
 			/*printf("%f %f\n", pos.x, pos.y);
 			return;*/
 			if (269 < npos2.x && npos2.x < 596 && 124 < npos2.y && npos2.y < 585) {
@@ -705,8 +711,8 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			else if (1055 < npos2.x && npos2.x < 1219 && 236 < npos2.y && npos2.y < 326) {
 				difficulty = 0;
 			}
-			else if (1055 < npos2.x && npos2.x < 1219 && 380< npos2.y && npos2.y < 471) {
-				difficulty =1;
+			else if (1055 < npos2.x && npos2.x < 1219 && 380 < npos2.y && npos2.y < 471) {
+				difficulty = 1;
 			}
 			return;
 		}
@@ -762,15 +768,15 @@ GLuint create_texture(const char* image_path, bool mipmap = true, GLenum wrap = 
 
 	return texture;
 }
-void rotate_chracter(float t, float old_t, float ntheta) {
+void rotate_character(float t, float old_t, float ntheta) {
 	// ntheta를 통하여 목표로 하는 각도 설정 , theta와 nthtea의 범위는 (0<= x < 2PI)
 	// theta의 값만큼 오른쪽 보는 방향 default에서 반시계 방향으로 회전
 	//printf("%f %f %f\n", theta, 2*PI, theta0);
 	float& theta = getModel("Character").theta;
-	int vel = 5;
+	int vel = 3;
 	if (l || r || u || d) {
 		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (abs(theta - ntheta) < 0.2f)
+		if (abs(theta - ntheta) < 0.1f)
 			theta = ntheta;
 		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
 			if (abs(theta - PI) < 0.01f || abs(theta - PI / 2 * 3) < 0.01f ||
@@ -835,7 +841,7 @@ bool user_init()
 	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
 
 	//텍스쳐 로딩
-	
+
 	SKY_LEFT = create_texture(skybox_left_path, true); if (!SKY_LEFT) return false;
 	SKY_DOWN = create_texture(skybox_down_path, true); if (!SKY_DOWN) return false;
 	SKY_BACK = create_texture(skybox_back_path, true); if (!SKY_BACK) return false;
@@ -845,14 +851,14 @@ bool user_init()
 
 	// load the mesh
 	models.push_back({ "../bin/mesh/Map1.obj","Map1", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({"../bin/mesh/Triangle.obj","triangle", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
+	models.push_back({ "../bin/mesh/Triangle.obj","triangle", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.back().visible = false;
 	models.push_back({ "../bin/mesh/Map2_1.obj" ,"Map2_1",vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map2_2.obj" ,"Map2_2",vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.back().visible = false;
 	models.push_back({ "../bin/mesh/Map2_3.obj" ,"Map2_3" , vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
 	models.push_back({ "../bin/mesh/Map3.obj","Map3", vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2) });
-	models.push_back({ "../bin/mesh/Character.obj", "Character",vec3(0),0.4f});
+	models.push_back({ "../bin/mesh/Character.obj", "Character",vec3(0),0.4f });
 	models.push_back({ "../bin/mesh/Enemy1.obj", "Enemy1", vec3(96,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy2.obj", "Enemy2", vec3(16,0,16), (0.5) });
 	models.push_back({ "../bin/mesh/Enemy3.obj", "Enemy3", vec3(8,0,32),(0.5) });
