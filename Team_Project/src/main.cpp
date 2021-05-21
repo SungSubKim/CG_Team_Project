@@ -108,7 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false;
+bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false, bell = false, opacity = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -119,6 +119,7 @@ trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
 float theta0=0;
+float counter = 0.0f;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -145,10 +146,10 @@ void update()
 
 	// build the model matrix for oscillating scale
 	static float falling_start = 0,ntheta =0;
+	static bool isfall = false, old_isfall = false;
 	float t = float(glfwGetTime());
 	int rate = 20; if (accel) rate *= 2;
 	float ds=0;
-	static bool b_triangle = false;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -156,37 +157,18 @@ void update()
 	model& model_duck1 = getModel("Enemy1");
 	model& model_duck2 = getModel("Enemy2");
 	model& model_duck3 = getModel("Enemy3");
+	model& model_boss = getModel("Boss");
+
+
 	vec3& e1_center = model_duck1.center;
-	vec3& e2_center = model_duck2.center;
-	vec3& e3_center = model_duck3.center;
-	vec3& direction_to_character1 = s_center - e1_center;
-	vec3& direction_to_character2 = s_center - e2_center;
-	vec3& direction_to_character3 = s_center - e3_center;
 	
-	float distance = xz_distance(s_center, e1_center);
+	//float distance = xz_distance(s_center, e1_center);
 	
 	//e1_center.z -= 0.1f;
-	vec3 diff_e = normalize(direction_to_character1) * (t - old_t) * 10.0f;
-	diff_e.y = 0;
-	if (!isfall && !b_help) {
+	
+	if (!isfall) {
 		if (difficulty == 1) {
-			if (e1_center.z - s_center.z < 0) {
-				if (e1_center.x - s_center.x > 0) {
-					model_duck1.theta = PI / 2 - atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
-				}
-				else {
-					model_duck1.theta = PI / 2 + atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
-				}
-			}
-			else {
-				if (e1_center.x - s_center.x > 0) {
-					model_duck1.theta = atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
-				}
-				else {
-					model_duck1.theta = -atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
-				}
-			}
-			e1_center = e1_center + diff_e;
+			trace_enemy_direction(model_character, model_duck1,t,old_t);			
 		}
 		else {
 			e1_center = vec3(69 + 26 * cos(0.2f * t), 0, 35 + 14 * sin(0.2f * t));
@@ -257,13 +239,28 @@ void update()
 			break;
 		case 2:
 			stage = check_map2(isfall, 2);
-			if(getTriangle())
-				stage++;
+			b_triangle = getTriangle(b_triangle,b_ability_to_get);
 			break;
 		case 3:
-			stage = check_map3(3);
+			stage = check_map3(isfall,3);
 			break;
 	}
+	counter += t - old_t;
+	if ((stage == 1 && enemy_num == 0 && next == 2) || (stage == 2 && b_triangle && next == 3)) stage++;
+	if (stage == 2 && next == 0) stage--; // 적용이 안됨
+	//stage clear조건
+	if (stage == 3) {
+		bell = bell_ring(t, old_t);
+		if (bell == true && counter >= 1.0f) {
+			counter = 0.0f;
+			engine->play2D(bell_mp3_src, false);
+		}
+
+		opacity = invisible();
+		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell, opacity);
+
+	}
+	//stage clear조
 	setStage(stage);
 	if (stage == 0)
 		stage++;
@@ -283,15 +280,18 @@ void update()
 			b_help = false;
 		}
 	}
-
 	old_b_die = b_die;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
-	model_character.update_matrix();
-	model_duck1.update_matrix();
-	model_duck2.update_matrix();
-	model_duck3.update_matrix();
+	if (b_triangle) {
+		float theta = model_character.theta;
+		getModel("triangle").center = s_center + vec3(6 * cos(theta), -DEFAULT_HIGHT, -6 * sin(theta));
+		getModel("triangle").theta = theta + PI / 6.0f;
+	}
+	for (auto& m : models)
+		m.update_matrix();
+	
 	//center와 theta의 정보를 캐릭터매트릭스에 반영한다.
 	
 	// update uniform variables in vertex/fragment shaders
@@ -428,8 +428,15 @@ void render()
 	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	mode = 0;
+	float alpha = 0.3f;
 	//false를 넣어준다.
+	if (opacity)
+		printf("true\n");
+	else
+		printf("false\n");
+	int model_number=0;
 	for (auto& model : models) {
+		model_number++;
 		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
 		if (!model.visible)
 			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
@@ -457,7 +464,11 @@ void render()
 				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 				glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
 				glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
+				//uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, vec4(1.0f,1.0f,1.0f,1.0f));
 				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+				
+				glUniform1i(glGetUniformLocation(program, "opacity"), opacity);
+				glUniform1i(glGetUniformLocation(program, "model_number"), model_number);
 			}
 
 			// render vertices: trigger shader programs to process vertex data
@@ -577,11 +588,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T) {
-			model& m = getModel("triangle");
-			if (&m == &none)
-				printf("not found: triangle\n");
-			m.visible = !m.visible;
-			//Triangle의 표시여부를 조정한다.
 			show_texcoord = !show_texcoord;
 		}
 		else if (key == GLFW_KEY_C) {
@@ -596,10 +602,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if (key == GLFW_KEY_G)
+		/*else if (key == GLFW_KEY_G)
 		{
 			b_triangle = true;
-		}
+		}*/
 		else if (key == GLFW_KEY_SPACE) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
@@ -630,6 +636,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;
 			//map2_2, 다리부분의 표시유무를 조절한다.
+		}
+		else if (key == GLFW_KEY_Z) {
+			model& m = getModel("triangle");
+			b_triangle = false;
+			b_ability_to_get = false;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			accel = 1;

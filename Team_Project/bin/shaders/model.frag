@@ -15,13 +15,15 @@ out vec4 fragColor;
 
 // texture sampler
 uniform bool	sky, snow;
+uniform float	alpha;
 uniform int		mode;
+uniform int		model_number;
 //sky변수의 추가 이것에 따라 어떤 값을 fragColor로 사용할지 결정
 uniform mat4	view_matrix;
 //uniform sampler2D TEX_MAP1, TEX_MAP2, TEX_MAP3;
 uniform sampler2D TEX_SKY, TEX_SNOW, SKY_LEFT, SKY_DOWN ,SKY_BACK, SKY_RIGHT, SKY_UP, SKY_FRONT, TITLETEX
-,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX,DIETEX;
-
+,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX;
+uniform bool opacity;
 uniform bool use_texture,b_help;
 uniform vec4 ambient, diffuse, specular, emissive, color;
 
@@ -93,5 +95,11 @@ void main()
 			discard;
 		fragColor = vec4(fragColor.rgb,fragColor.r) * color; // enable alpha blending
 	}
-	else fragColor = phong( l, n, h, iKd );
+	else{
+		fragColor = phong( l, n, h, iKd );
+		//agColor.a=alpha;
+		if(opacity==true&&model_number==7){
+			fragColor.a=0.3f;
+		}
+	}
 }
