@@ -425,8 +425,9 @@ void render()
 		float scale = min(scale_x, scale_y);
 
 		render_text("** How to play this game **", x / 4, y / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press direction keys to move the character.", x / 6, y * 2 / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to fire the snowflakes.", x / 6, y * 3 / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press direction keys to move the character.", x / 6, y * 2 / 7, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to fire the snowflakes.", x / 6, y * 3 / 7, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press 't' key to pick up or put things down.", x / 6, y * 4 / 7, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 		render_text("Press Space key to start!", x / 5, y * 4 / 5, 1.0f * scale, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
