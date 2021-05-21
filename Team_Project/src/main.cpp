@@ -108,7 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false;
+bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -251,10 +251,10 @@ void update()
 	counter += t - old_t;
 	//stage clear조건
 	if (stage == 3) {
-		bell = bell_ring(t, old_t);
+		bell = bell_ring(t, old_t, b_space);
 		if (bell == true && counter >= 1.0f) {
 			counter = 0.0f;
-			engine->play2D(bell_mp3_src, false);
+			engine->play2D(bell_mp3_src);
 		}
 
 		opacity = invisible();
@@ -575,10 +575,9 @@ void print_help()
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	//printf("%d %d %d \n", action, mods, key);
 	if (action == GLFW_PRESS)
 	{
-		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
+		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q) glfwSetWindowShouldClose(window, GL_TRUE);
 		if (before_game == 2) {
 			if (key == GLFW_KEY_SPACE)
 				before_game++;
@@ -587,10 +586,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
 			b_help = true;
 		}
-		else if (key == GLFW_KEY_HOME)					cam = camera();
-		else if (key == GLFW_KEY_T) {
-			show_texcoord = !show_texcoord;
-		}
+		else if (key == GLFW_KEY_HOME) cam = camera();
 		else if (key == GLFW_KEY_C) {
 			model& m = getModel("Character");
 			printf("%f %f %f\n", m.center.x, m.center.z, m.center.y);
@@ -603,10 +599,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		/*else if (key == GLFW_KEY_G)
-		{
-			b_triangle = true;
-		}*/
 		else if (key == GLFW_KEY_SPACE) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
@@ -638,7 +630,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			m.visible = !m.visible;
 			//map2_2, 다리부분의 표시유무를 조절한다.
 		}
-		else if (key == GLFW_KEY_Z) {
+		else if (key == GLFW_KEY_T) {
 			model& m = getModel("triangle");
 			b_triangle = false;
 			b_ability_to_get = false;
@@ -692,8 +684,6 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			cnt--;
 			if (cnt > 0)
 				return;
-			/*printf("%f %f\n", pos.x, pos.y);
-			return;*/
 			if (269 < npos2.x && npos2.x < 596 && 124 < npos2.y && npos2.y < 585) {
 				before_game++;
 				delete models[6].pMesh;
@@ -919,9 +909,6 @@ bool user_init()
 
 	//play the sound file
 	engine->play2D(mp3_src, true);
-	//engine->play2D(attack_mp3_src, true);
-	//engine->play2D(bell_mp3_src, true);
-	//engine->play2D(falling_mp3_src, true);
 
 	return true;
 }

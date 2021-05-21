@@ -92,7 +92,6 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play) {
 		onObstacle_now_e1 = true;
 	if (pow((old_e1_center.x - 69) / 25.0f, 2) + pow((old_e1_center.z - 35) / 13.0f, 2) < 1)
 		onObstacle_old_e1 = true;
-	//printf("%d %d \n", onObstacle_old, onObstacle_now);
 	if (!onObstacle_old && onObstacle_now) {
 		CopyMemory(s_center, old_s_center, sizeof(vec3));
 
@@ -117,7 +116,7 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play) {
 	if (fall_triangle && !triangle_added) {
 		if (!old_fall_triangle) {
 			falling_start = t;
-			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+			getModel("triangle").center = vec3(MAP_X * 4 / 5, 30, MAP_Z / 2);
 			getModel("triangle").visible = true;
 			play = true;
 		}
@@ -315,22 +314,16 @@ void trace_enemy_direction(model& source, model& destination, float t, float old
 void trace_enemy_direction_boss(model& source, model& destination, float t, float old_t, bool bell, bool opacity) {
 	static bool aggro = false;
 	vec3& s_center = vec3(0, 0, 0);
-	/*if (aggro)
-		printf("true\n");
-	else
-		printf("false\n");*/
-
-		//나한테 어그로가 끌리면
 
 	if (aggro) {
 		s_center = source.center;
 	}
 
 	//어그로가 안끌리면
-	if (!aggro && source.center.x <= 52.0f) {
+	if (!aggro && source.center.x <= 60.0f) {
 		s_center = boss_center;
 	}
-	if (source.center.x > 52.0f) {
+	if (source.center.x > 60.0f) {
 		aggro = true;
 	}
 	if (bell == true) {
@@ -377,14 +370,13 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 	d_center = d_center + diff_e;
 }
 
-bool bell_ring(float t, float old_t) {
+bool bell_ring(float t, float old_t, bool space) {
 
 	vec3& s_center = getModel("Character").center;
 	static bool previously_visited = false;
 
-	if (xz_distance(s_center, bell_center) < 8.0f) {
+	if (xz_distance(s_center, bell_center) < 8.0f && space) {
 		previously_visited = true;
-		//printf("ringring\n");
 		return true;
 	}
 	if (previously_visited) {
@@ -403,7 +395,6 @@ bool bell_ring(float t, float old_t) {
 bool invisible() {
 	vec3& s_center = getModel("Character").center;
 	if (xz_distance(s_center, invisible_center) < 12.0f) {
-		//printf("invisible\n");
 		return true;
 	}
 
