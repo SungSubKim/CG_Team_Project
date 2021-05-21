@@ -24,7 +24,7 @@ std::vector<struct square> divided_map1_obstacle = {
 { vec3(0,0,58),24,72-58 },{ vec3(0,0,61),29,MAP_Z-61 }, { vec3(0,0,63),33,MAP_Z-63 },
 { vec3(0,0,65),33,MAP_Z-65 }, { vec3(0-MGN,0,69),39+MGN,MAP_Z-69+MGN } };
 std::vector<struct square> divided_map2_land = {
-	{ vec3(0,0,0),36,72 },{ vec3(90,0,0),36,72 } };
+	{ vec3(0,0,0),36,72 },{ vec3(90,0,0),38,72 } };
 //장외 판정을 모든 사각형으로 나누어서한다.
 std::vector<struct square> divided_map2_bridge = {
 	{ vec3(36,0,9),36,9 },{ vec3(63,0,18),9,18 },
@@ -152,15 +152,17 @@ int check_map2(bool &fall, int stage) {
 	//if ((onBridge_old && !onBridge_now) ||(onLand_old && !onLand_now)) {
 	if ((onBridge_old || onLand_old) && (!onBridge_now && !onLand_now)) {
 		printf("%f\n", s_center.x);
-		if (s_center.x<=0) //left
+		if (s_center.x <= 0) //left
 			stage--;
+		else if (s_center.x >= 128)
+			stage++;
 		else
 			fall = true;
 	}
 	return stage;
 }
 
-int check_map3(int stage) {
+int check_map3(bool &fall, int stage) {
 	model& model_character = getModel("Character");
 	model& boss_character = getModel("Boss");
 	vec3& s_center = model_character.center;
@@ -178,10 +180,11 @@ int check_map3(int stage) {
 		}
 	}
 	if (onLand_old && !onLand_now) {
-		CopyMemory(s_center, old_s_center, sizeof(vec3));
-	}
-	else if (!onLand_old && !onLand_now) {
-		s_center = vec3(0);
+		//CopyMemory(s_center, old_s_center, sizeof(vec3));
+		if (s_center.x <= 0)
+			stage--;
+		else
+			fall = true;
 	}
 	return stage;
 }
@@ -295,28 +298,35 @@ int check_collision(int life){
 
 	return life;
 }
-bool getTriangle() {
+bool getTriangle(bool b_triangle, bool &b_ability) {
 	int stage=2;
+	if (b_triangle)
+		return true;
 	bool res = false;
 	vec3& s_center = getModel("Character").center;
 
 	vec3& t_center = getModel("triangle").center;
 	//printf("%f \n", xz_distance(vec3(120, 0, 35), s_center));
-	if (xz_distance(vec3(120, 0, 35), s_center) < 7 ) {
-		stage = 3;
-		s_center = vec3(0);
-		t_center = vec3(s_center.x, 15.0f, s_center.z);
-		getModel("triangle").visible = false;
-		getModel("Enemy3").visible = false;
-		getModel("Enemy2").visible = false;
-		getModel("Enemy1").visible = false;
-		res = true;
+	if (xz_distance(t_center, s_center) < 7) {
+		if (b_ability) {
+			res = true;
+			b_ability = false;
+		}
 	}
+	else
+		b_ability= true;
 	return res;
 }
 void setStage(int stage) {
 	static int old_stage = 0;
+	model& model_ch = getModel("Character");
 	if (old_stage != stage) {
+		for (auto& m : models) {
+			if (m.name == "triangle")
+				continue;
+			m.visible = false;
+		}
+		model_ch.visible = true;
 		switch (stage) {
 			case 1:
 				if (old_stage == 0) {
@@ -325,29 +335,27 @@ void setStage(int stage) {
 					getModel("Enemy3").live = true;
 					getModel("Character").center = vec3(2.3f, 0, 20);
 				}
-				else if (old_stage == 2) {
-					getModel("Character").center = vec3(127, 0, getModel("Character").center.z);
-				}
+				else if (old_stage == 2) 
+					model_ch.center.x = 128 - 0.1f;
 				getModel("Map1").visible = true;
-				getModel("Map2_1").visible = false;
-				getModel("Map2_3").visible = false;
 				getModel("Map3").visible = false;
 				getModel("Enemy3").visible = getModel("Enemy3").live;
 				getModel("Enemy2").visible = getModel("Enemy2").live;
 				getModel("Enemy1").visible = getModel("Enemy1").live;
-				getModel("triangle").visible = false;
 				break;
 			case 2:
-				getModel("Character").center = vec3(3, 0, 3);
-				getModel("Map1").visible = false;
+				if (old_stage == 1) {
+					model_ch.center.x = 0.1f;
+					getModel("triangle").visible = true;
+				}
+				else
+					model_ch.center.x = 128 - 0.1f;
 				getModel("Map2_1").visible = true;
 				getModel("Map2_3").visible = true;
-				getModel("triangle").visible = true;
+				getModel("triangle").center = vec3(MAP_X-8, -DEFAULT_HIGHT,MAP_Z/2 );
 				break;
 			case 3:
-				getModel("Character").center = vec3(3, 0, 3);
-				getModel("Map2_1").visible = false;
-				getModel("Map2_3").visible = false;
+				model_ch.center.x = 0.1f;
 				getModel("Map3").visible = true;
 				getModel("Boss").visible = true;
 				break;
