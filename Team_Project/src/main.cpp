@@ -108,7 +108,11 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
+<<<<<<< HEAD
 bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false;
+=======
+bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false, triangle_added = false;;
+>>>>>>> be4eb3b5fabb7a092318b8e3b522ffcb521393ef
 std::vector<particle_t> particles;
 
 //*************************************
@@ -235,7 +239,7 @@ void update()
 	switch (stage) {
 	case 1:
 		enemy_num = check_to_enemy(direc, b_space);
-		stage = check_map1(isfall, 1, enemy_num, falling_play);
+		stage = check_map1(isfall, 1, enemy_num, falling_play, triangle_added);
 		if (falling_play)
 			engine->play2D(falling_mp3_src);
 		life = check_collision(life);
@@ -279,6 +283,12 @@ void update()
 			life = 3;
 			b_die = false;
 			b_help = false;
+
+			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+			getModel("triangle").visible = false;
+			b_triangle = false;
+			b_ability_to_get = true;
+			triangle_added = false;
 		}
 	}
 	old_b_die = b_die;
@@ -609,6 +619,12 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			before_game = 0;
 			stage = 0;
 			life = 3;
+
+			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+			getModel("triangle").visible = false;
+			b_triangle = false;
+			b_ability_to_get = true;
+			triangle_added = false;
 		}
 		else if (key == GLFW_KEY_LEFT) {
 			l = true; r = false; u = false; d = false;
@@ -766,9 +782,12 @@ void rotate_character(float t, float old_t, float ntheta) {
 	int vel = 3;
 	if (l || r || u || d) {
 		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (abs(theta - ntheta) < 0.1f)
+		if (ntheta == 0 && (abs(theta - 2 * PI) < 0.1f || abs(theta) < 0.1f))
+			theta = 0;
+		else if (abs(theta - ntheta) < 0.1f)
 			theta = ntheta;
 		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
+			//ntheta theta차이가 PI값일때
 			if (abs(theta - PI) < 0.01f || abs(theta - PI / 2 * 3) < 0.01f ||
 				abs(theta) < 0.01f)
 				theta += vel * (t - old_t);

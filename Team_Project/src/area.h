@@ -39,7 +39,7 @@ static float duration = 0.0f;
 //장외 판정을 모든 사각형으로 나누어서한다.
 //판을 사각형으로 나누어 입력하였다. land는 map2의 육지 bridge는 map2의 다리
 
-int check_map1(bool& fall, int stage, int enemy_num, bool& play) {
+int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_added) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	model& e1_character = getModel("Enemy1");
@@ -109,7 +109,7 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play) {
 	if ((!onObstacle_old_e1 && onObstacle_now_e1) || (onLand_old_e1 && !onLand_now_e1)) {
 		CopyMemory(e1_center, old_e1_center, sizeof(vec3));
 	}
-	static bool fall_triangle = false, old_fall_triangle = false, triangle_added = false;
+	static bool fall_triangle = false, old_fall_triangle = false;
 	static float falling_start = 0;
 	float t = (float)glfwGetTime();
 	fall_triangle = (enemy_num == 0);
