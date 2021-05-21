@@ -144,8 +144,15 @@ void update()
 	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
 	glUniform1i(glGetUniformLocation(program, "b_help"), b_help);
 	glUniform1i(glGetUniformLocation(program, "stage"), stage);
-	if (before_game < 3)
+	if (before_game < 3 )
 		return;
+	if (stage == 4) {
+		static float final_time = (float)glfwGetTime();
+		if((float)glfwGetTime()-final_time >3)
+			glfwSetWindowShouldClose(window, GL_TRUE);
+
+	}
+
 
 
 	// update projection matrix
@@ -260,11 +267,10 @@ void update()
 	//stage clearÁ¶°Ç
 	if (stage == 3) {
 		bell = bell_ring(t, old_t, b_space);
-		if (bell == true && counter >= 1.0f) {
+		if (bell == true && counter >= 10.0f) {
 			counter = 0.0f;
 			engine->play2D(bell_mp3_src);
 		}
-
 		opacity = invisible();
 		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell, opacity);
 
@@ -303,6 +309,10 @@ void update()
 		float theta = model_character.theta;
 		getModel("triangle").center = s_center + vec3(6 * cos(theta), -DEFAULT_HIGHT, -6 * sin(theta));
 		getModel("triangle").theta = theta + PI / 6.0f;
+	}
+	else if (stage == 3 && xz_distance(getModel("triangle").center, vec3(MAP_X - 10, 0, MAP_Z / 2))) {
+		b_help = true;
+		stage++;
 	}
 	for (auto& m : models)
 		m.update_matrix();

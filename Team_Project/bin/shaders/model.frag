@@ -97,7 +97,6 @@ void main()
 	}
 	else{
 		fragColor = phong( l, n, h, iKd );
-		//agColor.a=alpha;
 		if(opacity==true&&model_number==7){
 			fragColor.a=0.3f;
 		}
