@@ -32,6 +32,10 @@ std::vector<struct square> divided_map2_bridge = {
 { vec3(63,0,54),27,9 }};
 std::vector<struct square> divided_map3 = {
 	{ vec3(0,0,0),128,72 } };
+vec3& bell_center = vec3(70, 0, 70);
+vec3& boss_center = vec3(MAP_X * 3 / 4, 0, MAP_Z / 2);
+vec3& invisible_center = vec3(68, 0, 10);
+static float duration = 0.0f;
 //장외 판정을 모든 사각형으로 나누어서한다.
 //판을 사각형으로 나누어 입력하였다. land는 map2의 육지 bridge는 map2의 다리
 
@@ -228,6 +232,148 @@ inline int direction(vec3 a, vec3 b) {
 	}
 	return dist;
 }
+
+void trace_enemy_direction(model& source, model& destination, float t, float old_t) {
+	vec3& s_center = source.center;
+	vec3& d_center = destination.center;
+	vec3& direction_to_source = s_center - d_center;
+	vec3& diff_e= normalize(direction_to_source)* (t - old_t) * 10.0f;
+	diff_e.y = 0;
+	if (xz_distance(d_center, s_center) < 5.0f) {
+		destination.theta = destination.theta;
+		d_center = d_center;
+		return;
+		
+	}	
+	if (d_center.z - s_center.z < 0) {
+		if (d_center.x - s_center.x > 0) {
+			destination.theta = PI / 2 - atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z)));
+			
+		}
+		else {
+			destination.theta = PI / 2 + atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z)));
+			
+		}
+	}
+	else {
+		if (d_center.x - s_center.x > 0) {
+			destination.theta = atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z))) - PI / 2;
+			
+
+		}
+		else {
+			destination.theta = -atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z))) - PI / 2;
+			
+		}
+	}
+	d_center = d_center + diff_e;
+}
+//boss의 행동 정리
+//1. 벨이 false이고 주인공이 72 안넘어가면 가만히 있어야함.
+//2. 벨이 true이고 
+//2. 벨이 이전에 방문해서 true가 되고 지속시간 내면 벨에 있어야함.
+//3. 벨의 지속시간이 끝나면 원래 있던 위치로 되돌아감.
+//4.
+void trace_enemy_direction_boss(model& source, model& destination, float t, float old_t, bool bell,bool opacity) {
+	static bool aggro = false;
+	vec3& s_center = vec3(0, 0, 0);
+	/*if (aggro)
+		printf("true\n");
+	else
+		printf("false\n");*/
+
+	//나한테 어그로가 끌리면
+	
+	if (aggro) {
+		s_center = source.center;
+	}
+
+	//어그로가 안끌리면
+	if (!aggro&&source.center.x<=52.0f) {
+		s_center = boss_center;
+	}
+	if (source.center.x > 52.0f) {
+		aggro = true;
+	}
+	if(bell==true) {
+		aggro = false;
+		s_center = bell_center;
+	}
+	if (opacity&& bell==false) {
+		s_center = boss_center;
+	}
+	vec3& d_center = destination.center;
+	vec3& direction_to_source = s_center - d_center;
+	vec3& diff_e = normalize(direction_to_source) * (t - old_t) * 15.0f;
+	diff_e.y = 0;
+	
+	
+	if (xz_distance(d_center, s_center) < 5.0f) {
+		destination.theta = destination.theta;
+		d_center = d_center;
+		return;
+
+	}
+	
+	if (d_center.z - s_center.z < 0) {
+		if (d_center.x - s_center.x > 0) {
+			destination.theta = PI / 2 - atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z)));
+
+		}
+		else {
+			destination.theta = PI / 2 + atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z)));
+
+		}
+	}
+	else {
+		if (d_center.x - s_center.x > 0) {
+			destination.theta = atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z))) - PI / 2;
+
+
+		}
+		else {
+			destination.theta = -atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z))) - PI / 2;
+
+		}
+	}
+	d_center = d_center + diff_e;
+}
+
+bool bell_ring(float t, float old_t) {
+	
+	vec3& s_center = getModel("Character").center;
+	static bool previously_visited = false;
+
+	if (xz_distance(s_center, bell_center) < 8.0f) {
+		previously_visited = true;
+		//printf("ringring\n");
+		return true;
+	}
+	if (previously_visited) {
+		duration += t - old_t;
+		
+		if (duration >= 5.0f) {
+			duration = 0.0f;
+			previously_visited = false;
+		}
+		return true;
+	}
+	
+	return false;
+}
+
+bool invisible(){
+	vec3& s_center = getModel("Character").center;
+	if (xz_distance(s_center, invisible_center) < 12.0f) {
+		//printf("invisible\n");
+		return true;
+	}
+	
+	return false;
+}
+
+
+
 int check_to_enemy(int direc, bool space) {
 	vec3& s_center = getModel("Character").center;
 	int res = 0;
@@ -270,6 +416,9 @@ int check_collision(int life){
 
 	return life;
 }
+
+
+
 bool getTriangle() {
 	int stage=2;
 	bool res = false;
@@ -312,6 +461,12 @@ void setStage(int stage) {
 				break;
 			default:
 				getModel("Character").center = vec3(3, 0, 3);
+				//for debug
+				getModel("Map1").visible = false;
+				getModel("Enemy3").visible = false;
+				getModel("Enemy2").visible = false;
+				getModel("Enemy1").visible = false;
+
 				getModel("Map2_1").visible = false;
 				getModel("Map2_3").visible = false;
 				getModel("Map3").visible = true;

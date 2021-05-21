@@ -108,7 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false;
+bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false, bell = false, opacity=false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -119,6 +119,7 @@ trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t=0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
 float theta0=0;
+float counter = 0.0f;
 mat4 model_matrix0;
 light_t		light;
 material_t	material;
@@ -156,37 +157,19 @@ void update()
 	model& model_duck1 = getModel("Enemy1");
 	model& model_duck2 = getModel("Enemy2");
 	model& model_duck3 = getModel("Enemy3");
+	model& model_boss = getModel("Boss");
+
+
 	vec3& e1_center = model_duck1.center;
-	vec3& e2_center = model_duck2.center;
-	vec3& e3_center = model_duck3.center;
-	vec3& direction_to_character1 = s_center - e1_center;
-	vec3& direction_to_character2 = s_center - e2_center;
-	vec3& direction_to_character3 = s_center - e3_center;
 	
-	float distance = xz_distance(s_center, e1_center);
+	//float distance = xz_distance(s_center, e1_center);
 	
 	//e1_center.z -= 0.1f;
-	vec3 diff_e = normalize(direction_to_character1) * (t - old_t) * 10.0f;
-	diff_e.y = 0;
+	
+	
 	if (!isfall) {
 		if (difficulty == 1) {
-			if (e1_center.z - s_center.z < 0) {
-				if (e1_center.x - s_center.x > 0) {
-					model_duck1.theta = PI / 2 - atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
-				}
-				else {
-					model_duck1.theta = PI / 2 + atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z)));
-				}
-			}
-			else {
-				if (e1_center.x - s_center.x > 0) {
-					model_duck1.theta = atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
-				}
-				else {
-					model_duck1.theta = -atan(abs((e1_center.x - s_center.x) / (e1_center.z - s_center.z))) - PI / 2;
-				}
-			}
-			e1_center = e1_center + diff_e;
+			trace_enemy_direction(model_character, model_duck1,t,old_t);			
 		}
 		else {
 			e1_center = vec3(69 + 26 * cos(0.2f * t), 0, 35 + 14 * sin(0.2f * t));
@@ -264,9 +247,23 @@ void update()
 			next = check_map3(3);
 			break;
 	}
+	
+	counter += t - old_t;
 	if ((stage == 1 && enemy_num == 0 && next == 2 )||(stage == 2 && b_triangle && next == 3)) stage++;
 	if (stage == 2 && next == 0) stage--; // 적용이 안됨
 	//stage clear조건
+	if (stage == 3) {
+		bell = bell_ring(t,old_t);
+		if (bell == true && counter >= 1.0f) {
+			counter = 0.0f;
+			engine->play2D(bell_mp3_src, false);
+		}
+
+		opacity = invisible();
+		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell,opacity);
+
+	}
+
 	setStage(stage);
 	if (stage == 0)
 		stage++;
@@ -292,6 +289,7 @@ void update()
 	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
 	model_character.update_matrix();
+	model_boss.update_matrix();
 	model_duck1.update_matrix();
 	model_duck2.update_matrix();
 	model_duck3.update_matrix();
@@ -431,8 +429,15 @@ void render()
 	uloc = glGetUniformLocation(program, "sky"); if (uloc > -1) glUniform1i(uloc, false); 
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	mode = 0;
+	float alpha = 0.3f;
 	//false를 넣어준다.
+	if (opacity)
+		printf("true\n");
+	else
+		printf("false\n");
+	int model_number=0;
 	for (auto& model : models) {
+		model_number++;
 		// 모든 models vector에 등록된 model을 돌며 렌더링한다.
 		if (!model.visible)
 			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
@@ -460,7 +465,11 @@ void render()
 				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 				glUniform4fv(glGetUniformLocation(program, "specular"), 1, (const float*)(&g.mat->specular));
 				glUniform4fv(glGetUniformLocation(program, "emissive"), 1, (const float*)(&g.mat->emissive));
+				//uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, vec4(1.0f,1.0f,1.0f,1.0f));
 				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+				
+				glUniform1i(glGetUniformLocation(program, "opacity"), opacity);
+				glUniform1i(glGetUniformLocation(program, "model_number"), model_number);
 			}
 
 			// render vertices: trigger shader programs to process vertex data
