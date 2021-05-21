@@ -256,7 +256,7 @@ void update()
 		life = check_collision(life);
 		break;
 	case 2:
-		stage = check_map2(isfall, 2);
+		stage = check_map2(isfall, 2,difficulty);
 		break;
 	case 3:
 		stage = check_map3(isfall, 3);
@@ -294,6 +294,8 @@ void update()
 			b_die = false;
 			b_help = false;
 
+			getModel("triangle").stage = 1;
+			getModel("triangle").theta = 0;
 			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
 			getModel("triangle").visible = false;
 			b_triangle = false;
@@ -310,10 +312,12 @@ void update()
 		getModel("triangle").center = s_center + vec3(6 * cos(theta), -DEFAULT_HIGHT, -6 * sin(theta));
 		getModel("triangle").theta = theta + PI / 6.0f;
 	}
-	else if (stage == 3 && xz_distance(getModel("triangle").center, vec3(MAP_X - 10, 0, MAP_Z / 2))) {
+	else if (getModel("triangle").stage == 3 && stage == 3 && xz_distance(getModel("triangle").center, vec3(MAP_X - 10, 0, MAP_Z / 2)) < 7) {
 		b_help = true;
 		stage++;
 	}
+	else if (triangle_added)
+		getModel("triangle").center.y = -DEFAULT_HIGHT - 5;
 	for (auto& m : models)
 		m.update_matrix();
 
@@ -685,6 +689,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			stage = 0;
 			life = 3;
 
+			getModel("triangle").stage = 1;
+			getModel("triangle").theta = 0;
 			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
 			getModel("triangle").visible = false;
 			b_triangle = false;
