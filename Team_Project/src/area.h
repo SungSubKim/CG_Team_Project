@@ -121,7 +121,7 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 			play = true;
 		}
 		float dt_fall = t - falling_start;
-		if (getModel("triangle").center.y < -DEFAULT_HIGHT) {
+		if (getModel("triangle").center.y < -DEFAULT_HIGHT-5) {
 			fall_triangle = false;
 			triangle_added = true;
 		}
@@ -134,7 +134,7 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 	return stage;
 }
 
-int check_map2(bool& fall, int stage) {
+int check_map2(bool& fall, int stage,int difficulty) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -151,14 +151,6 @@ int check_map2(bool& fall, int stage) {
 		{
 			onLand_now = true;
 		}
-		/*if (s.point.x <= old_s_center.x && s.point.x <= s_center.x) {
-			map2right = true;
-		}
-		if (old_s_center.x <= s.point.x + s.x_length && s_center.x <= s.point.x + s.x_length) {
-			map2left = true;
-		}
-		if (map2left) stage--;
-		if (map2right) stage++;*/
 	}
 	bool onBridge_old = false, onBridge_now = false;
 	for (auto& s : divided_map2_bridge) {
@@ -180,6 +172,8 @@ int check_map2(bool& fall, int stage) {
 			stage--;
 		else if (s_center.x >= 128)
 			stage++;
+		else if(difficulty==0 && onBridge_old)
+			CopyMemory(s_center, old_s_center, sizeof(vec3));
 		else
 			fall = true;
 	}
@@ -488,37 +482,41 @@ void setStage(int stage, bool b_triangle) {
 		}
 		model_ch.visible = true;
 		switch (stage) {
-		case 1:
-			if (old_stage == 0) {
-				getModel("Enemy1").live = true;
-				getModel("Enemy2").live = true;
-				getModel("Enemy3").live = true;
-				getModel("Character").center = vec3(2.3f, 0, 20);
-			}
-			else if (old_stage == 2)
-				model_ch.center.x = 128 - 0.1f;
-			getModel("Map1").visible = true;
-			getModel("Map3").visible = false;
-			getModel("Enemy3").visible = getModel("Enemy3").live;
-			getModel("Enemy2").visible = getModel("Enemy2").live;
-			getModel("Enemy1").visible = getModel("Enemy1").live;
-			break;
-		case 2:
-			if (old_stage == 1) {
+			case 1:
+				if (old_stage == 0) {
+					getModel("Enemy1").live = true;
+					getModel("Enemy2").live = true;
+					getModel("Enemy3").live = true;
+					getModel("Enemy1").center = vec3(96, 0, 16);
+					getModel("Enemy2").center = vec3(16, 0, 16);
+					getModel("Enemy3").center = vec3(8, 0, 32);
+					getModel("Character").center = vec3(2.3f, 0, 20);
+					getModel("triangle").center = vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);
+				}
+				else if (old_stage == 2)
+					model_ch.center.x = 128 - 0.1f;
+				getModel("Map1").visible = true;
+				getModel("Map3").visible = false;
+				getModel("Enemy3").visible = getModel("Enemy3").live;
+				getModel("Enemy2").visible = getModel("Enemy2").live;
+				getModel("Enemy1").visible = getModel("Enemy1").live;
+				break;
+			case 2:
+				if (old_stage == 1) {
+					model_ch.center.x = 0.1f;
+				}
+				else
+					model_ch.center.x = 128 - 0.1f;
+				getModel("Map2_1").visible = true;
+				getModel("Map2_3").visible = true;
+				break;
+			case 3:
 				model_ch.center.x = 0.1f;
-			}
-			else
-				model_ch.center.x = 128 - 0.1f;
-			getModel("Map2_1").visible = true;
-			getModel("Map2_3").visible = true;
-			break;
-		case 3:
-			model_ch.center.x = 0.1f;
-			getModel("Map3").visible = true;
-			getModel("Boss").visible = true;
-			break;
-		default:
-			break;
+				getModel("Map3").visible = true;
+				getModel("Boss").visible = true;
+				break;
+			default:
+				break;
 		}
 	}
 	old_stage = stage;
