@@ -9,6 +9,14 @@ The goal of this team project is implementing a game that uses OpenGL for main g
 ## Title image
 <img width="1600" alt="Title image" src="./Team_Project/bin/images/CGTitle.png">
 
+## How to Play?
+<img width="1600" alt="Title image" src="./Team_Project/bin/images/character_select_easy.png">
+Choose your character and difficulty level
+
+Move: direction key
+Attack: space bar
+Help: F1 key
+
 ## Contributer
 1. hanwoolsky (Hanwool Huh)
 2. SungSubKim (SeongSeob Kim)

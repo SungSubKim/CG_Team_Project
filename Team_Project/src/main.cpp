@@ -108,7 +108,7 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false, bell = false, opacity=false;
+bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, isfall = false, old_isfall = false, b_triangle = true, b_die = false, old_b_die = false, bell = false, opacity = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -146,10 +146,10 @@ void update()
 
 	// build the model matrix for oscillating scale
 	static float falling_start = 0,ntheta =0;
+	static bool isfall = false, old_isfall = false;
 	float t = float(glfwGetTime());
 	int rate = 20; if (accel) rate *= 2;
 	float ds=0;
-	static bool b_triangle = false;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -165,7 +165,6 @@ void update()
 	//float distance = xz_distance(s_center, e1_center);
 	
 	//e1_center.z -= 0.1f;
-	
 	
 	if (!isfall) {
 		if (difficulty == 1) {
@@ -187,7 +186,6 @@ void update()
 		if(!old_isfall) {
 			falling_start = t;
 			view_matrix0 = cam.view_matrix;
-			life--;
 
 			engine->play2D(falling_mp3_src);
 		}
@@ -196,6 +194,7 @@ void update()
 			s_center = vec3(2.3f, 0, 20);
 			cam.view_matrix = view_matrix0;
 			isfall = false;
+			life--;
 
 		}
 		else {
@@ -234,36 +233,34 @@ void update()
 	old_isfall = isfall;
 	switch (stage) {
 		case 1:
-			next = check_map1(isfall, 1);
 			enemy_num = check_to_enemy(direc, b_space);
+			stage = check_map1(isfall, 1, enemy_num);
 			life = check_collision(life);
 			break;
 		case 2:
-			next = check_map2(isfall, 2);
-			printf("next: %d\n", next);
-			b_triangle = getTriangle();
+			stage = check_map2(isfall, 2);
+			b_triangle = getTriangle(b_triangle,b_ability_to_get);
 			break;
 		case 3:
-			next = check_map3(3);
+			stage = check_map3(isfall,3);
 			break;
 	}
-	
 	counter += t - old_t;
-	if ((stage == 1 && enemy_num == 0 && next == 2 )||(stage == 2 && b_triangle && next == 3)) stage++;
+	if ((stage == 1 && enemy_num == 0 && next == 2) || (stage == 2 && b_triangle && next == 3)) stage++;
 	if (stage == 2 && next == 0) stage--; // 적용이 안됨
 	//stage clear조건
 	if (stage == 3) {
-		bell = bell_ring(t,old_t);
+		bell = bell_ring(t, old_t);
 		if (bell == true && counter >= 1.0f) {
 			counter = 0.0f;
 			engine->play2D(bell_mp3_src, false);
 		}
 
 		opacity = invisible();
-		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell,opacity);
+		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell, opacity);
 
 	}
-
+	//stage clear조
 	setStage(stage);
 	if (stage == 0)
 		stage++;
@@ -283,16 +280,18 @@ void update()
 			b_help = false;
 		}
 	}
-
 	old_b_die = b_die;
 	CopyMemory(old_s_center, s_center, sizeof(vec3));
 	CopyMemory(old_e1_center,e1_center, sizeof(vec3));
 	// old_s_center의 값을 준비하여 backtracking을 준비
-	model_character.update_matrix();
-	model_boss.update_matrix();
-	model_duck1.update_matrix();
-	model_duck2.update_matrix();
-	model_duck3.update_matrix();
+	if (b_triangle) {
+		float theta = model_character.theta;
+		getModel("triangle").center = s_center + vec3(6 * cos(theta), -DEFAULT_HIGHT, -6 * sin(theta));
+		getModel("triangle").theta = theta + PI / 6.0f;
+	}
+	for (auto& m : models)
+		m.update_matrix();
+	
 	//center와 theta의 정보를 캐릭터매트릭스에 반영한다.
 	
 	// update uniform variables in vertex/fragment shaders
@@ -589,11 +588,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T) {
-			model& m = getModel("triangle");
-			if (&m == &none)
-				printf("not found: triangle\n");
-			m.visible = !m.visible;
-			//Triangle의 표시여부를 조정한다.
 			show_texcoord = !show_texcoord;
 		}
 		else if (key == GLFW_KEY_C) {
@@ -608,10 +602,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if (key == GLFW_KEY_G)
+		/*else if (key == GLFW_KEY_G)
 		{
 			b_triangle = true;
-		}
+		}*/
 		else if (key == GLFW_KEY_SPACE) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
@@ -642,6 +636,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 				printf("not found: Map2_2\n");
 			m.visible = !m.visible;
 			//map2_2, 다리부분의 표시유무를 조절한다.
+		}
+		else if (key == GLFW_KEY_Z) {
+			model& m = getModel("triangle");
+			b_triangle = false;
+			b_ability_to_get = false;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			accel = 1;

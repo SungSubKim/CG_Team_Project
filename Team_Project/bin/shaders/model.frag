@@ -57,8 +57,13 @@ void main()
 			case 3:
 				fragColor = texture( HELPTEX3, tc );
 				return;
-			default:
+			case 4:
 				fragColor = texture( FINALTEX, tc );
+				return;
+			case 5:
+				fragColor = texture( DIETEX, tc );
+				return;
+			default:
 				return;
 		}
 	}

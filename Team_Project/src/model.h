@@ -26,8 +26,9 @@ struct model {
 	// 기본값은 단위행렬로 셋팅, render전에 model_matrix로서 호출되어 uniform 변수로 vertex shader에 넘겨진다.
 	bool visible = true;
 	//visible은 true로 되있고 초기화 과정이나 키보드 입력과정에서 false로 변경되면 render되지 않는다.
-	mesh2* pMesh;
-	//mesh pointer
+	mesh2* pMesh;//mesh pointer
+	bool live = false; // stage를 넘나들때 enemy가 살아있는지를 체크?
+	
 };
 inline void model::update_matrix() {
 	model_matrix = mat4::translate(center)
