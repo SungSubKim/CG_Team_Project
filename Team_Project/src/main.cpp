@@ -108,11 +108,8 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-<<<<<<< HEAD
-bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false;
-=======
-bool	b_help = false, show_texcoord = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false, triangle_added = false;;
->>>>>>> be4eb3b5fabb7a092318b8e3b522ffcb521393ef
+bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false, triangle_added = false;
+
 std::vector<particle_t> particles;
 
 //*************************************
