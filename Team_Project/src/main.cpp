@@ -31,9 +31,15 @@ static const char* title_image_path = "../bin/images/CGTitle.png";
 static const char* help_image_path1 = "../bin/images/Map1.png";
 static const char* help_image_path2 = "../bin/images/Map2.png";
 static const char* help_image_path3 = "../bin/images/Map3.png";
-static const char* select_image_path = "../bin/images/character_select.png";
-static const char* select_image_path1 = "../bin/images/character_select_easy.png";
-static const char* select_image_path2 = "../bin/images/character_select_hard.png";
+static const char* select_image_path00 = "../bin/images/character_select00.png";
+static const char* select_image_path01 = "../bin/images/character_select01.png";
+static const char* select_image_path02 = "../bin/images/character_select02.png"; 
+static const char* select_image_path10 = "../bin/images/character_select10.png"; 
+static const char* select_image_path11 = "../bin/images/character_select11.png"; 
+static const char* select_image_path12 = "../bin/images/character_select12.png";
+static const char* select_image_path20 = "../bin/images/character_select20.png";
+static const char* select_image_path21 = "../bin/images/character_select21.png"; 
+static const char* select_image_path22 = "../bin/images/character_select22.png";
 static const char* final_image_path = "../bin/images/Final.png";
 static const char* die_image_path = "../bin/images/die.png";
 static const char* mp3_path = "../bin/sounds/CGMusic.mp3";
@@ -95,7 +101,7 @@ GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0, SNOWTEX = 0, TITLETEX = 0, SELECTTEX = 0, SELECTTEX1 = 0, SELECTTEX2 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX = 0, DIETEX = 0;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0, SNOWTEX = 0, TITLETEX = 0, SELECTTEX00 = 0, SELECTTEX01 = 0, SELECTTEX02 = 0, SELECTTEX10 = 0, SELECTTEX11= 0, SELECTTEX12= 0, SELECTTEX20= 0, SELECTTEX21 = 0, SELECTTEX22 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX = 0, DIETEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
@@ -108,7 +114,8 @@ int		life = 3;
 int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
-bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = true, bell = false, opacity = false, triangle_added = false;
+int		selected_res[2];
+bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false;
 
 std::vector<particle_t> particles;
 
@@ -137,8 +144,15 @@ void update()
 	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
 	glUniform1i(glGetUniformLocation(program, "b_help"), b_help);
 	glUniform1i(glGetUniformLocation(program, "stage"), stage);
-	if (before_game < 3)
+	if (before_game < 3 )
 		return;
+	if (stage == 4) {
+		static float final_time = (float)glfwGetTime();
+		if((float)glfwGetTime()-final_time >3)
+			glfwSetWindowShouldClose(window, GL_TRUE);
+
+	}
+
 
 
 	// update projection matrix
@@ -149,7 +163,7 @@ void update()
 	static float falling_start = 0, ntheta = 0;
 	static bool isfall = false, old_isfall = false;
 	float t = float(glfwGetTime());
-	int rate = 20; if (accel) rate *= 2;
+	int rate = 20; if (accel) rate *= 2; if (b_triangle) rate -= 5;
 	float ds = 0;
 	//키보드에서 left control키를 누른 상태면 속력이 감소하게 해준다
 	model& model_character = getModel("Character");
@@ -248,7 +262,7 @@ void update()
 		stage = check_map3(isfall, 3);
 		break;
 	}
-	b_triangle = getTriangle(b_triangle, b_ability_to_get);
+	b_triangle = getTriangle(b_triangle) && b_ability_to_get;
 	counter += t - old_t;
 	//stage clear조건
 	if (stage == 3) {
@@ -283,7 +297,7 @@ void update()
 			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
 			getModel("triangle").visible = false;
 			b_triangle = false;
-			b_ability_to_get = true;
+			//b_ability_to_get = true;
 			triangle_added = false;
 		}
 	}
@@ -295,6 +309,10 @@ void update()
 		float theta = model_character.theta;
 		getModel("triangle").center = s_center + vec3(6 * cos(theta), -DEFAULT_HIGHT, -6 * sin(theta));
 		getModel("triangle").theta = theta + PI / 6.0f;
+	}
+	else if (stage == 3 && xz_distance(getModel("triangle").center, vec3(MAP_X - 10, 0, MAP_Z / 2))) {
+		b_help = true;
+		stage++;
 	}
 	for (auto& m : models)
 		m.update_matrix();
@@ -407,10 +425,47 @@ void render()
 	}
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
-		if (difficulty == 0)
-			glBindTexture(GL_TEXTURE_2D, SELECTTEX1);
-		else
-			glBindTexture(GL_TEXTURE_2D, SELECTTEX2);
+		if (selected_res[0] == 0) {
+			if (selected_res[1] == 0) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
+			}
+			else if (selected_res[1] == 1) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
+
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
+
+			}
+		}
+		else if (selected_res[0] == 1) {
+			if (selected_res[1] == 0) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
+
+			}
+			else if (selected_res[1] == 1) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
+
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
+
+			}
+		}
+		else {
+			if (selected_res[1] == 0) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
+
+			}
+			else if (selected_res[1] == 1) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
+
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
+
+			}
+		}
 		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
 		glBindVertexArray(vertex_array);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -424,8 +479,9 @@ void render()
 		float scale = min(scale_x, scale_y);
 
 		render_text("** How to play this game **", x / 4, y / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press direction keys to move the character.", x / 6, y * 2 / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-		render_text("Press Space key to fire the snowflakes.", x / 6, y * 3 / 6, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press direction keys to move the character.", x / 6, y * 2 / 7, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press Space key to fire the snowflakes.", x / 6, y * 3 / 7, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+		render_text("Press 't' key to pick up or put things down.", x / 6, y * 4 / 7, 0.8f * scale, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 		render_text("Press Space key to start!", x / 5, y * 4 / 5, 1.0f * scale, vec4(1, 1, 0, alpha), dpi_scale);
 		glfwSwapBuffers(window);
 		return;
@@ -585,8 +641,21 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q) glfwSetWindowShouldClose(window, GL_TRUE);
 		if (before_game == 2) {
-			if (key == GLFW_KEY_SPACE)
+			if (key == GLFW_KEY_SPACE) {
 				before_game++;
+				if (selected_res[0] == 1) {
+					delete models[6].pMesh;
+					model hani = { "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f };
+					hani.pMesh = load_model(hani.path);
+					models[6] = hani;
+				}
+				else {
+					delete models[6].pMesh;
+					model hani = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
+					hani.pMesh = load_model(hani.path);
+					models[6] = hani;
+				}
+			}
 			return;
 		}
 		if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
@@ -619,7 +688,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
 			getModel("triangle").visible = false;
 			b_triangle = false;
-			b_ability_to_get = true;
+			//b_ability_to_get = true;
 			triangle_added = false;
 		}
 		else if (key == GLFW_KEY_LEFT) {
@@ -644,8 +713,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_T) {
 			model& m = getModel("triangle");
-			b_triangle = false;
-			b_ability_to_get = false;
+			//b_triangle = false;
+			//b_ability_to_get = false;
+			b_ability_to_get = !b_ability_to_get;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			accel = 1;
@@ -658,6 +728,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		if (key == GLFW_KEY_LEFT) {
 			l = false;
 		}
+		/*else if (key == GLFW_KEY_T) {
+			b_ability_to_get = false;
+		}*/
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
 			b_help = false;
 		}
@@ -685,11 +758,13 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 	{
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
 		ivec2 npos2 = converted_loc(pos.x, pos.y, window_size);
-		//printf("%f %f %d %d\n", pos.x, pos.y, npos2.x, npos2.y);
+		printf("%f %f %d %d\n", pos.x, pos.y, npos2.x, npos2.y);
 		if (before_game == 0) {
 			if (894 < npos2.x && npos2.x < 1181 && 64 < npos2.y && npos2.y < 150)
 				before_game++;
 			cnt = 2;
+			selected_res[0] = 0;
+			selected_res[1] = 0;
 			return;
 		}
 		if (before_game == 1) {
@@ -697,24 +772,24 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			if (cnt > 0)
 				return;
 			if (269 < npos2.x && npos2.x < 596 && 124 < npos2.y && npos2.y < 585) {
-				before_game++;
-				delete models[6].pMesh;
-				model hani = { "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f };
-				hani.pMesh = load_model(hani.path);
-				models[6] = hani;
+				//before_game++;
+				selected_res[0] = 1;
 			}
 			else if (693 < npos2.x && npos2.x < 1018 && 124 < npos2.y && npos2.y < 585) {
-				before_game++;
-				delete models[6].pMesh;
-				model hani = { "../bin/mesh/MainGirl.obj","Character",vec3(2.3f, 0, 20),0.4f };
-				hani.pMesh = load_model(hani.path);
-				models[6] = hani;
+				//before_game++;
+				selected_res[0] = 2;
 			}
 			else if (1055 < npos2.x && npos2.x < 1219 && 236 < npos2.y && npos2.y < 326) {
 				difficulty = 0;
+				selected_res[1] = 1;
 			}
 			else if (1055 < npos2.x && npos2.x < 1219 && 380 < npos2.y && npos2.y < 471) {
 				difficulty = 1;
+				selected_res[1] = 2;
+			}
+			else if (1029 < npos2.x&&npos2.x < 1211 && 28 < npos2.y&&npos2.y < 123&& selected_res[0]!=0&&selected_res[1]!=0) {
+
+				before_game++;
 			}
 			return;
 		}
@@ -902,9 +977,15 @@ bool user_init()
 	HELPTEX2 = create_texture(help_image_path2, true); if (!HELPTEX2) return false;
 	HELPTEX3 = create_texture(help_image_path3, true); if (!HELPTEX3) return false;
 	FINALTEX = create_texture(final_image_path, true); if (!FINALTEX) return false;
-	SELECTTEX = create_texture(select_image_path, true); if (!SELECTTEX) return false;
-	SELECTTEX1 = create_texture(select_image_path1, true); if (!SELECTTEX1) return false;
-	SELECTTEX2 = create_texture(select_image_path2, true); if (!SELECTTEX2) return false;
+	SELECTTEX00 = create_texture(select_image_path00, true); if (!SELECTTEX00) return false;
+	SELECTTEX01 = create_texture(select_image_path01, true); if (!SELECTTEX01) return false;
+	SELECTTEX02 = create_texture(select_image_path02, true); if (!SELECTTEX02) return false;
+	SELECTTEX10 = create_texture(select_image_path10, true); if (!SELECTTEX10) return false;
+	SELECTTEX11 = create_texture(select_image_path11, true); if (!SELECTTEX11) return false;
+	SELECTTEX12 = create_texture(select_image_path12, true); if (!SELECTTEX12) return false;
+	SELECTTEX20 = create_texture(select_image_path20, true); if (!SELECTTEX20) return false;
+	SELECTTEX21 = create_texture(select_image_path21, true); if (!SELECTTEX21) return false;
+	SELECTTEX22 = create_texture(select_image_path22, true); if (!SELECTTEX22) return false;
 	DIETEX = create_texture(die_image_path, true); if (!DIETEX) return false;
 
 	engine = irrklang::createIrrKlangDevice();
