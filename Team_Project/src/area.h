@@ -314,18 +314,21 @@ void trace_enemy_direction(model& source, model& destination, float t, float old
 void trace_enemy_direction_boss(model& source, model& destination, float t, float old_t, bool bell, bool opacity) {
 	static bool aggro = false;
 	vec3& s_center = vec3(0, 0, 0);
-
+	
 	if (aggro) {
 		s_center = source.center;
 	}
 
 	//어그로가 안끌리면
-	if (!aggro && source.center.x <= 60.0f) {
+	if (!aggro) {
 		s_center = boss_center;
 	}
-	if (source.center.x > 60.0f) {
+	if (xz_distance(source.center, destination.center) < 30.0f) {
 		aggro = true;
+	}else {
+		aggro = false;
 	}
+
 	if (bell == true) {
 		aggro = false;
 		s_center = bell_center;
@@ -337,7 +340,7 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 	vec3& direction_to_source = s_center - d_center;
 	vec3& diff_e = normalize(direction_to_source) * (t - old_t) * 15.0f;
 	diff_e.y = 0;
-
+	printf("%lf\n", s_center.x);
 
 	if (xz_distance(d_center, s_center) < 5.0f) {
 		destination.theta = destination.theta;
@@ -375,7 +378,7 @@ bool bell_ring(float t, float old_t, bool space) {
 	vec3& s_center = getModel("Character").center;
 	static bool previously_visited = false;
 
-	if (xz_distance(s_center, bell_center) < 8.0f && space) {
+	if (xz_distance(s_center, bell_center) < 10.0f && space) {
 		previously_visited = true;
 		return true;
 	}

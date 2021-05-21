@@ -253,11 +253,10 @@ void update()
 	//stage clearÁ¶°Ç
 	if (stage == 3) {
 		bell = bell_ring(t, old_t, b_space);
-		if (bell == true && counter >= 1.0f) {
+		if (bell == true && counter >= 10.0f) {
 			counter = 0.0f;
 			engine->play2D(bell_mp3_src);
 		}
-
 		opacity = invisible();
 		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell, opacity);
 
