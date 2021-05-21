@@ -776,9 +776,12 @@ void rotate_character(float t, float old_t, float ntheta) {
 	int vel = 3;
 	if (l || r || u || d) {
 		//회전 중일때 ntheta와 theta값을 토대로 theta값 재설정
-		if (abs(theta - ntheta) < 0.1f)
+		if (ntheta==0 &&(abs(theta - 2 * PI) < 0.1f || abs(theta) < 0.1f))
+			theta = 0;
+		else if (abs(theta - ntheta) < 0.1f)
 			theta = ntheta;
 		else if (abs(abs(ntheta - theta) - PI) < 0.01f) {
+			//ntheta theta차이가 PI값일때
 			if (abs(theta - PI) < 0.01f || abs(theta - PI / 2 * 3) < 0.01f ||
 				abs(theta) < 0.01f)
 				theta += vel * (t - old_t);
