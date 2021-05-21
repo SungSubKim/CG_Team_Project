@@ -16,6 +16,8 @@ vec3 old_e3_center = vec3(0);
 bool e1collide = false;
 bool e2collide = false;
 bool e3collide = false;
+bool Bosscollide = false;
+
 std::vector<struct square> divided_map1_land = {
 	{ vec3(-MGN,0,-MGN),128 + 2 * MGN,72 + 2 * MGN } };
 std::vector<struct square> divided_map1_obstacle = {
@@ -33,7 +35,7 @@ std::vector<struct square> divided_map2_bridge = {
 std::vector<struct square> divided_map3 = {
 	{ vec3(0,0,0),128,72 } };
 vec3& bell_center = vec3(70, 0, 70);
-vec3& boss_center = vec3(MAP_X * 3 / 4, 0, MAP_Z / 2);
+vec3& boss_center = vec3(MAP_X * 4 / 5, 0, MAP_Z / 2);
 vec3& invisible_center = vec3(68, 0, 10);
 static float duration = 0.0f;
 //장외 판정을 모든 사각형으로 나누어서한다.
@@ -198,7 +200,6 @@ int check_map3(bool& fall, int stage) {
 		}
 	}
 	if (onLand_old && !onLand_now) {
-		//CopyMemory(s_center, old_s_center, sizeof(vec3));
 		if (s_center.x <= 0)
 			stage--;
 		else
@@ -207,33 +208,6 @@ int check_map3(bool& fall, int stage) {
 	return stage;
 }
 
-void check_side() {
-	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
-	model& model_character = getModel("Character");
-	vec3& s_center = model_character.center;
-	bool onLand_old = false, onLand_now = false;
-	for (auto& s : divided_map3) {
-		if ((s.point.x <= old_s_center.x && old_s_center.x <= s.point.x + s.x_length
-			&& s.point.z <= old_s_center.z && old_s_center.z <= s.point.z + s.z_length))
-		{
-			onLand_old = true;
-		}
-		if ((s.point.x <= s_center.x && s_center.x <= s.point.x + s.x_length
-			&& s.point.z <= s_center.z && s_center.z <= s.point.z + s.z_length))
-		{
-			onLand_now = true;
-		}
-	}
-	if (onLand_old && !onLand_now) {
-		CopyMemory(s_center, old_s_center, sizeof(vec3));
-	}
-	else if (!onLand_old && !onLand_now) {
-		s_center = vec3(0);
-	}
-	return;
-}
-
-//실제로 나가면 s_center값의 초기화가 이루어지거나, 아니면 육지를 못벗어나게한다.
 inline float xz_distance(vec3 a, vec3 b) {
 	return  pow((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z), 0.5f);
 }
@@ -299,12 +273,7 @@ void trace_enemy_direction(model& source, model& destination, float t, float old
 	}
 	d_center = d_center + diff_e;
 }
-//boss의 행동 정리
-//1. 벨이 false이고 주인공이 72 안넘어가면 가만히 있어야함.
-//2. 벨이 true이고 
-//2. 벨이 이전에 방문해서 true가 되고 지속시간 내면 벨에 있어야함.
-//3. 벨의 지속시간이 끝나면 원래 있던 위치로 되돌아감.
-//4.
+
 void trace_enemy_direction_boss(model& source, model& destination, float t, float old_t, bool bell, bool opacity) {
 	static bool aggro = false;
 	vec3& s_center = vec3(0, 0, 0);
@@ -313,7 +282,6 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 		s_center = source.center;
 	}
 
-	//어그로가 안끌리면
 	if (!aggro) {
 		s_center = boss_center;
 	}
@@ -334,34 +302,27 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 	vec3& direction_to_source = s_center - d_center;
 	vec3& diff_e = normalize(direction_to_source) * (t - old_t) * 15.0f;
 	diff_e.y = 0;
-	printf("%lf\n", s_center.x);
 
 	if (xz_distance(d_center, s_center) < 5.0f) {
 		destination.theta = destination.theta;
 		d_center = d_center;
 		return;
-
 	}
 
 	if (d_center.z - s_center.z < 0) {
 		if (d_center.x - s_center.x > 0) {
 			destination.theta = PI / 2 - atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z)));
-
 		}
 		else {
 			destination.theta = PI / 2 + atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z)));
-
 		}
 	}
 	else {
 		if (d_center.x - s_center.x > 0) {
 			destination.theta = atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z))) - PI / 2;
-
-
 		}
 		else {
 			destination.theta = -atan(abs((d_center.x - s_center.x) / (d_center.z - s_center.z))) - PI / 2;
-
 		}
 	}
 	d_center = d_center + diff_e;
@@ -372,7 +333,7 @@ bool bell_ring(float t, float old_t, bool space) {
 	vec3& s_center = getModel("Character").center;
 	static bool previously_visited = false;
 
-	if (xz_distance(s_center, bell_center) < 10.0f && space) {
+	if (xz_distance(s_center, bell_center) < 15.0f && space) {
 		previously_visited = true;
 		return true;
 	}
@@ -397,8 +358,6 @@ bool invisible() {
 
 	return false;
 }
-
-
 
 int check_to_enemy(int direc, bool space) {
 	vec3& s_center = getModel("Character").center;
@@ -425,21 +384,18 @@ int check_collision(int life) {
 	model& e1 = getModel("Enemy1"), & e2 = getModel("Enemy2"), & e3 = getModel("Enemy3");
 	bool collide = false;
 	if (e1.visible && !e1collide && xz_distance(e1.center, s_center) < 5.0f) {
-		printf("geelo\n");
 		collide = true;
 		e1collide = true;
 		e1.live = false;
 		e1.visible = false;
 	}
 	if (e2.visible && !e2collide && xz_distance(e2.center, s_center) < 5.0f) {
-		printf("geelo\n");
 		collide = true;
 		e2collide = true;
 		e2.live = false;
 		e2.visible = false;
 	}
 	if (e3.visible && !e3collide && xz_distance(e3.center, s_center) < 5.0f) {
-		printf("geelo\n");
 		collide = true;
 		e3collide = true;
 		e3.live = false;
@@ -453,6 +409,29 @@ int check_collision(int life) {
 
 	return life;
 }
+
+bool check_boss_collision(float t, float old_t) {
+	vec3& s_center = getModel("Character").center;
+	model& Boss = getModel("Boss");
+	bool collide = false;
+	duration += t - old_t;
+	if (Boss.visible && !Bosscollide && xz_distance(Boss.center, s_center) < 10.0f) {
+		collide = true;
+		Bosscollide = true;
+	}
+
+	if (duration >= 5.0f) {
+		duration = 0.0f;
+		Bosscollide = false;
+	}
+
+	if (collide) {
+		return collide;
+	}
+
+	return collide;
+}
+
 bool getTriangle(bool b_triangle) {
 	bool res = false;
 	if (b_triangle)
@@ -460,7 +439,6 @@ bool getTriangle(bool b_triangle) {
 	vec3& s_center = getModel("Character").center;
 
 	vec3& t_center = getModel("triangle").center;
-	//printf("%f \n", xz_distance(vec3(120, 0, 35), s_center));
 	if (xz_distance(t_center, s_center) < 7) {
 		res = true;
 	}
@@ -470,7 +448,6 @@ void setStage(int stage, bool b_triangle) {
 	static int old_stage = 0;
 	model& model_ch = getModel("Character");
 	if (old_stage != stage) {
-		//printf("%d %d\n", b_triangle, getModel("triangle").stage);
 		if (b_triangle)
 			getModel("triangle").stage = stage;
 		for (auto& m : models) {

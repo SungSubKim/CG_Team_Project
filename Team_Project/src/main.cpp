@@ -115,7 +115,7 @@ int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
 int		selected_res[2];
-bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false;
+bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false, boss_collide = false;
 
 std::vector<particle_t> particles;
 
@@ -148,9 +148,8 @@ void update()
 		return;
 	if (stage == 4) {
 		static float final_time = (float)glfwGetTime();
-		if((float)glfwGetTime()-final_time >3)
+		if((float)glfwGetTime()-final_time > 3.0f)
 			glfwSetWindowShouldClose(window, GL_TRUE);
-
 	}
 
 
@@ -177,10 +176,6 @@ void update()
 
 	vec3& e1_center = model_duck1.center;
 
-	//float distance = xz_distance(s_center, e1_center);
-
-	//e1_center.z -= 0.1f;
-
 	if (!isfall && !b_help) {
 		if (difficulty == 1) {
 			trace_enemy_direction(model_character, model_duck1, t, old_t);
@@ -190,18 +185,12 @@ void update()
 			model_duck1.theta = PI / 2.0f - 0.2f * t;
 		}
 	}
-	//e2_center = e2_center + direction_to_character2 / 100.0f;
-	//e3_center = e3_center + direction_to_character3 / 100.0f;
 
-
-	//model_duck2.pole = vec3(1, 0, 0);
-	//e1_center.x -= 0.01f;
 	static mat4 view_matrix0;
 	if (isfall) {
 		if (!old_isfall) {
 			falling_start = t;
 			view_matrix0 = cam.view_matrix;
-
 			engine->play2D(falling_mp3_src);
 		}
 		float dt_fall = t - falling_start;
@@ -210,7 +199,6 @@ void update()
 			cam.view_matrix = view_matrix0;
 			isfall = false;
 			life--;
-
 		}
 		else {
 			vec3 eye = vec3(s_center.x + 70 * cos(ntheta), 30, s_center.z - 70 * sin(ntheta));
@@ -256,10 +244,16 @@ void update()
 		life = check_collision(life);
 		break;
 	case 2:
-		stage = check_map2(isfall, 2,difficulty);
+		stage = check_map2(isfall, 2, difficulty);
 		break;
 	case 3:
 		stage = check_map3(isfall, 3);
+		boss_collide = check_boss_collision(t, old_t);
+		if (boss_collide) {
+			life--;
+			engine->play2D(falling_mp3_src);
+			boss_collide = false;
+		}
 		break;
 	}
 	b_triangle = getTriangle(b_triangle) && b_ability_to_get;
