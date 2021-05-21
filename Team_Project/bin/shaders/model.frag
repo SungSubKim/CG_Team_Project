@@ -22,7 +22,7 @@ uniform int		model_number;
 uniform mat4	view_matrix;
 //uniform sampler2D TEX_MAP1, TEX_MAP2, TEX_MAP3;
 uniform sampler2D TEX_SKY, TEX_SNOW, SKY_LEFT, SKY_DOWN ,SKY_BACK, SKY_RIGHT, SKY_UP, SKY_FRONT, TITLETEX
-,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX;
+,HELPTEX1,HELPTEX2,HELPTEX3,FINALTEX,DIETEX;
 uniform bool opacity;
 uniform bool use_texture,b_help;
 uniform vec4 ambient, diffuse, specular, emissive, color;
