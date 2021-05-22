@@ -14,6 +14,7 @@
 // forward declarations for freetype text
 bool init_text();
 void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
+void setStage();
 
 //*************************************
 // global constants
@@ -270,7 +271,7 @@ void update()
 
 	}
 	//stage clear¡∂
-	setStage(stage, b_triangle);
+	setStage();
 	if (stage == 0)
 		stage++;
 
@@ -288,13 +289,6 @@ void update()
 			b_die = false;
 			b_help = false;
 
-			getModel("triangle").stage = 1;
-			getModel("triangle").theta = 0;
-			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
-			getModel("triangle").visible = false;
-			b_triangle = false;
-			//b_ability_to_get = true;
-			triangle_added = false;
 		}
 	}
 	old_b_die = b_die;
@@ -683,13 +677,13 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			stage = 0;
 			life = 3;
 
-			getModel("triangle").stage = 1;
-			getModel("triangle").theta = 0;
-			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
-			getModel("triangle").visible = false;
-			b_triangle = false;
-			//b_ability_to_get = true;
-			triangle_added = false;
+			//getModel("triangle").stage = 1;
+			//getModel("triangle").theta = 0;
+			//getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+			//getModel("triangle").visible = false;
+			//b_triangle = false;
+			////b_ability_to_get = true;
+			//triangle_added = false;
 		}
 		else if (key == GLFW_KEY_LEFT) {
 			l = true; r = false; u = false; d = false;
@@ -891,7 +885,69 @@ void rotate_character(float t, float old_t, float ntheta) {
 	while (theta < 0)
 		theta += 2 * PI;
 }
+void setStage() {
+	static int old_stage = 0;
+	model& model_ch = getModel("Character");
+	if (old_stage != stage) {
+		if (b_triangle)
+			getModel("triangle").stage = stage;
+		for (auto& m : models) {
+			if (m.name == "triangle" && m.stage == stage) {
+				m.visible = true;
+				continue;
+			}
+			m.visible = false;
+		}
+		model_ch.visible = true;
+		switch (stage) {
+		case 1:
+			if (old_stage == 0) {
+				getModel("Enemy1").live = true;
+				getModel("Enemy2").live = true;
+				getModel("Enemy3").live = true;
+				getModel("Enemy1").center = vec3(96, 0, 16);
+				getModel("Enemy2").center = vec3(16, 0, 16);
+				getModel("Enemy3").center = vec3(8, 0, 32);
+				getModel("Character").center = vec3(2.3f, 0, 20);
+				getModel("triangle").center = vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);
 
+				getModel("triangle").stage = 1;
+				getModel("triangle").theta = 0;
+				getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+				getModel("triangle").visible = false;
+				b_triangle = false;
+				b_ability_to_get = false;
+				triangle_added = false;
+				
+			}
+			else if (old_stage == 2)
+				model_ch.center.x = 128 - 0.1f;
+			getModel("Map1").visible = true;
+			getModel("Map3").visible = false;
+			getModel("Enemy3").visible = getModel("Enemy3").live;
+			getModel("Enemy2").visible = getModel("Enemy2").live;
+			getModel("Enemy1").visible = getModel("Enemy1").live;
+			break;
+		case 2:
+			if (old_stage == 1) {
+				model_ch.center.x = 0.1f;
+			}
+			else
+				model_ch.center.x = 128 - 0.1f;
+			getModel("Map2_1").visible = true;
+			getModel("Map2_3").visible = true;
+			break;
+		case 3:
+			model_ch.center.x = 0.1f;
+			getModel("Map3").visible = true;
+			getModel("Boss").visible = true;
+			break;
+		default:
+			break;
+		}
+	}
+	old_stage = stage;
+}
 bool user_init()
 {
 	// log hotkeys
