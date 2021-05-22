@@ -1,10 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#define DEFAULT_HIGHT 10.5
 // 맵을 10만큼 내린다.
-#define MAP_X	128
-#define MAP_Z	72
 // 맵의 가로 세로 크기
 struct model {
 	std::string path = "/";

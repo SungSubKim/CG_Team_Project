@@ -50,19 +50,19 @@ static const char* falling_mp3_path = "../bin/sounds/falling.mp3";
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
 // common structures
-struct camera
-{
-	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
-	vec3	at = vec3(-2 + MAP_X / 2, 0, 0 + MAP_Z / 2);
-	vec3	up = vec3(0, 1, 0);
-	mat4	view_matrix = mat4::look_at(eye, at, up);
-
-	float	fovy = PI / 4.0f; // must be in radian
-	float	aspect_ratio;
-	float	dNear = 1.0f;
-	float	dFar = 1000.0f;
-	mat4	projection_matrix;
-};
+//struct camera
+//{
+//	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
+//	vec3	at = vec3(MAP_X / 2, 0, 0 + MAP_Z / 2);
+//	vec3	up = vec3(0, 1, 0);
+//	mat4	view_matrix = mat4::look_at(eye, at, up);
+//
+//	float	fovy = PI / 4.0f; // must be in radian
+//	float	aspect_ratio;
+//	float	dNear = 1.0f;
+//	float	dFar = 1000.0f;
+//	mat4	projection_matrix;
+//} cam;
 
 struct light_t
 {
@@ -121,8 +121,8 @@ std::vector<particle_t> particles;
 
 //*************************************
 // scene objects
-
-camera		cam;
+//
+//camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t = 0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
@@ -133,9 +133,9 @@ light_t		light;
 material_t	material;
 int frame_counter = 0;
 //*************************************
-float min(float a, float b) {
-	return a < b ? a : b;
-}
+//float min(float a, float b) {
+//	return a < b ? a : b;
+//}
 //float& theta = getModel("Character").theta;
 void rotate_character(float t, float old_t, float ntheta);
 void update()
@@ -544,39 +544,39 @@ void render()
 	glBindVertexArray(vertex_array);
 
 	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
-
-	model_matrix_background = mat4::translate(100, 100, -250) * mat4::scale(300.0f, 300.0f, 100.0f);
+	float scale2 = 400;
+	model_matrix_background = mat4::translate(cam.at+vec3(0,0,scale2)) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 6;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, 0, -scale2))  * mat4::scale(scale2);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 3;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(-200, 100, 50) * mat4::rotate(vec3(0, 1, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(-scale2, 0, 0)) * mat4::rotate(vec3(0, 1, 0), PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 1;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(400, 100, 50) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(scale2, 0, 0)) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 4;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(0,-scale2, 0)) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 2;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, 400, 50) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, scale2, 0)) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 5;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
@@ -672,7 +672,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if (key == GLFW_KEY_SPACE) {
+		else if (key == GLFW_KEY_SPACE && stage>0) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
 		}
