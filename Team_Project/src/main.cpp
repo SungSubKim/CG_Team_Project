@@ -118,7 +118,7 @@ int		difficulty = 0;
 int		selected_res[2];
 int old_stage = 0;
 bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false, boss_collide = false, aggro[3] = { false, false,false };
-
+bool	prev_bell = false;
 std::vector<particle_t> particles;
 
 //*************************************
@@ -284,10 +284,11 @@ void update()
 	//stage clearÁ¶°Ç
 	if (stage == 3) {
 		bell = bell_ring(t, old_t, b_space);
-		if (bell == true && counter >= 10.0f) {
-			counter = 0.0f;
+		if (bell == true && prev_bell==false) {
+		
 			engine->play2D(bell_mp3_src);
 		}
+		prev_bell = bell;
 		opacity = invisible();
 		trace_enemy_direction_boss(model_character, model_boss, t, old_t, bell, opacity);
 

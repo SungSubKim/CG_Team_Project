@@ -37,7 +37,7 @@ std::vector<struct square> divided_map3 = {
 vec3& bell_center = vec3(70, 0, 70);
 vec3& boss_center = vec3(MAP_X * 4 / 5, 0, MAP_Z / 2);
 vec3& invisible_center = vec3(68, 0, 10);
-static float duration = 0.0f;
+static float bell_duration = 0.0f;
 //장외 판정을 모든 사각형으로 나누어서한다.
 //판을 사각형으로 나누어 입력하였다. land는 map2의 육지 bridge는 map2의 다리
 
@@ -289,27 +289,34 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 	static bool aggro = false;
 	vec3& s_center = vec3(0, 0, 0);
 
-	if (aggro) {
-		s_center = source.center;
-	}
-
-	if (!aggro) {
+	//투명하고 벨이 안울리면 자기자리로 돌아감.
+	if (opacity && bell == false) {
 		s_center = boss_center;
 	}
+	// 어그로가 끌리면 쫓아감
+	else if (aggro) {
+		s_center = source.center;
+	}
+	//어그로가 안끌리고 벨이 안울리면 자리로 돌아감
+	else if (!aggro&&!bell) {
+		s_center = boss_center;
+	}
+
+	//둘 사이 거리가 30이하면 쫓아감
 	if (xz_distance(source.center, destination.center) < 30.0f) {
 		aggro = true;
 	}
+	// 아니면 안쫓아감
 	else {
 		aggro = false;
 	}
-
+	//벨이 울리면 어그로를 벨이 받음
 	if (bell == true) {
 		aggro = false;
 		s_center = bell_center;
 	}
-	if (opacity && bell == false) {
-		s_center = boss_center;
-	}
+
+
 	vec3& d_center = destination.center;
 	vec3& direction_to_source = s_center - d_center;
 	vec3& diff_e = normalize(direction_to_source) * (t - old_t) * 15.0f;
@@ -343,22 +350,27 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 bool bell_ring(float t, float old_t, bool space) {
 
 	vec3& s_center = getModel("Character").center;
+	vec3& b_center = getModel("Boss").center;
 	static bool previously_visited = false;
-
+	//벨이 일정거리 이하고 스페이스바를 누른상태면 이전 방문상태 true 및 true 반환
 	if (xz_distance(s_center, bell_center) < 15.0f && space) {
 		previously_visited = true;
 		return true;
 	}
+	//이전에 방문했던 상태면 5초 이후에 false 반환
 	if (previously_visited) {
-		duration += t - old_t;
-
-		if (duration >= 5.0f) {
-			duration = 0.0f;
+		printf("bell duration: %lf\n", bell_duration);
+		if (xz_distance(b_center, bell_center) < 8.0f) {
+			bell_duration += t - old_t;
+		}
+		
+		if (bell_duration >= 5.0f) {
+			bell_duration = 0.0f;
 			previously_visited = false;
 		}
 		return true;
 	}
-
+	//이전에 방문하지 않았으면 false
 	return false;
 }
 
@@ -422,6 +434,8 @@ int check_collision(int life) {
 	return life;
 }
 
+
+float duration = 0.0f;
 bool check_boss_collision(float t, float old_t) {
 	vec3& s_center = getModel("Character").center;
 	model& Boss = getModel("Boss");
