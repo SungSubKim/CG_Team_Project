@@ -712,10 +712,12 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			//map2_2, 다리부분의 표시유무를 조절한다.
 		}
 		else if (key == GLFW_KEY_T) {
+			model& c = getModel("Character");
 			model& m = getModel("triangle");
 			//b_triangle = false;
 			//b_ability_to_get = false;
-			b_ability_to_get = !b_ability_to_get;
+			if (xz_distance(c.center,m.center) <7)
+				b_ability_to_get = !b_ability_to_get;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
 			accel = 1;
