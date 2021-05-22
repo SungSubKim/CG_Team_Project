@@ -14,6 +14,7 @@
 // forward declarations for freetype text
 bool init_text();
 void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
+void setStage();
 
 //*************************************
 // global constants
@@ -50,19 +51,19 @@ static const char* falling_mp3_path = "../bin/sounds/falling.mp3";
 std::vector<vertex>	unit_circle_vertices;	// host-side vertices
 //*************************************
 // common structures
-struct camera
-{
-	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
-	vec3	at = vec3(-2 + MAP_X / 2, 0, 0 + MAP_Z / 2);
-	vec3	up = vec3(0, 1, 0);
-	mat4	view_matrix = mat4::look_at(eye, at, up);
-
-	float	fovy = PI / 4.0f; // must be in radian
-	float	aspect_ratio;
-	float	dNear = 1.0f;
-	float	dFar = 1000.0f;
-	mat4	projection_matrix;
-};
+//struct camera
+//{
+//	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
+//	vec3	at = vec3(MAP_X / 2, 0, 0 + MAP_Z / 2);
+//	vec3	up = vec3(0, 1, 0);
+//	mat4	view_matrix = mat4::look_at(eye, at, up);
+//
+//	float	fovy = PI / 4.0f; // must be in radian
+//	float	aspect_ratio;
+//	float	dNear = 1.0f;
+//	float	dFar = 1000.0f;
+//	mat4	projection_matrix;
+//} cam;
 
 struct light_t
 {
@@ -121,8 +122,8 @@ std::vector<particle_t> particles;
 
 //*************************************
 // scene objects
-
-camera		cam;
+//
+//camera		cam;
 trackball	tb;
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
 float old_t = 0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
@@ -133,9 +134,9 @@ light_t		light;
 material_t	material;
 int frame_counter = 0;
 //*************************************
-float min(float a, float b) {
-	return a < b ? a : b;
-}
+//float min(float a, float b) {
+//	return a < b ? a : b;
+//}
 //float& theta = getModel("Character").theta;
 void rotate_character(float t, float old_t, float ntheta);
 void update()
@@ -270,7 +271,7 @@ void update()
 
 	}
 	//stage clear조
-	setStage(stage, b_triangle);
+	setStage();
 	if (stage == 0)
 		stage++;
 
@@ -288,13 +289,6 @@ void update()
 			b_die = false;
 			b_help = false;
 
-			getModel("triangle").stage = 1;
-			getModel("triangle").theta = 0;
-			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
-			getModel("triangle").visible = false;
-			b_triangle = false;
-			//b_ability_to_get = true;
-			triangle_added = false;
 		}
 	}
 	old_b_die = b_die;
@@ -504,38 +498,39 @@ void render()
 
 	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
 
-	model_matrix_background = mat4::translate(100, 100, -250) * mat4::scale(300.0f, 300.0f, 10.0f);
+	float scale2 = 400;
+	model_matrix_background = mat4::translate(cam.at+vec3(0,0, scale2)) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 6;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 10.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, 0, -scale2))  * mat4::scale(scale2);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 3;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(-200, 100, 50) * mat4::rotate(vec3(0, 1, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(-scale2, 0, 0)) * mat4::rotate(vec3(0, 1, 0), PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 1;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(400, 100, 50) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(scale2, 0, 0)) * mat4::rotate(vec3(0, 1, 0), -PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 4;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, -200, 50) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(0,-scale2, 0)) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 2;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, 400, 50) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, scale2, 0)) * mat4::rotate(vec3(1, 0, 0), PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 5;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
@@ -631,7 +626,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if (key == GLFW_KEY_SPACE) {
+		else if (key == GLFW_KEY_SPACE && stage>0) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
 		}
@@ -642,13 +637,13 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			stage = 0;
 			life = 3;
 
-			getModel("triangle").stage = 1;
-			getModel("triangle").theta = 0;
-			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
-			getModel("triangle").visible = false;
-			b_triangle = false;
-			//b_ability_to_get = true;
-			triangle_added = false;
+			//getModel("triangle").stage = 1;
+			//getModel("triangle").theta = 0;
+			//getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+			//getModel("triangle").visible = false;
+			//b_triangle = false;
+			////b_ability_to_get = true;
+			//triangle_added = false;
 		}
 		else if (key == GLFW_KEY_LEFT) {
 			l = true; r = false; u = false; d = false;
@@ -850,7 +845,69 @@ void rotate_character(float t, float old_t, float ntheta) {
 	while (theta < 0)
 		theta += 2 * PI;
 }
+void setStage() {
+	static int old_stage = 0;
+	model& model_ch = getModel("Character");
+	if (old_stage != stage) {
+		if (b_triangle)
+			getModel("triangle").stage = stage;
+		for (auto& m : models) {
+			if (m.name == "triangle" && m.stage == stage) {
+				m.visible = true;
+				continue;
+			}
+			m.visible = false;
+		}
+		model_ch.visible = true;
+		switch (stage) {
+		case 1:
+			if (old_stage == 0) {
+				getModel("Enemy1").live = true;
+				getModel("Enemy2").live = true;
+				getModel("Enemy3").live = true;
+				getModel("Enemy1").center = vec3(96, 0, 16);
+				getModel("Enemy2").center = vec3(16, 0, 16);
+				getModel("Enemy3").center = vec3(8, 0, 32);
+				getModel("Character").center = vec3(2.3f, 0, 20);
+				getModel("triangle").center = vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);
 
+				getModel("triangle").stage = 1;
+				getModel("triangle").theta = 0;
+				getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+				getModel("triangle").visible = false;
+				b_triangle = false;
+				b_ability_to_get = false;
+				triangle_added = false;
+				
+			}
+			else if (old_stage == 2)
+				model_ch.center.x = 128 - 0.1f;
+			getModel("Map1").visible = true;
+			getModel("Map3").visible = false;
+			getModel("Enemy3").visible = getModel("Enemy3").live;
+			getModel("Enemy2").visible = getModel("Enemy2").live;
+			getModel("Enemy1").visible = getModel("Enemy1").live;
+			break;
+		case 2:
+			if (old_stage == 1) {
+				model_ch.center.x = 0.1f;
+			}
+			else
+				model_ch.center.x = 128 - 0.1f;
+			getModel("Map2_1").visible = true;
+			getModel("Map2_3").visible = true;
+			break;
+		case 3:
+			model_ch.center.x = 0.1f;
+			getModel("Map3").visible = true;
+			getModel("Boss").visible = true;
+			break;
+		default:
+			break;
+		}
+	}
+	old_stage = stage;
+}
 bool user_init()
 {
 	// log hotkeys

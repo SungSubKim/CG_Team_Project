@@ -1,7 +1,31 @@
 #ifndef __TRACKBALL_H__
 #define __TRACKBALL_H__
 #include "cgmath.h"
+#define DEFAULT_HIGHT 10.5
+#define MAP_X	128
+#define MAP_Z	72
+struct camera
+{
+	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
+	vec3	at = vec3(MAP_X / 2, 0, 0 + MAP_Z / 2);
+	vec3	up = vec3(0, 1, 0);
+	mat4	view_matrix = mat4::look_at(eye, at, up);
 
+	float	fovy = PI / 4.0f; // must be in radian
+	float	aspect_ratio;
+	float	dNear = 1.0f;
+	float	dFar = 1000.0f;
+	mat4	projection_matrix;
+	vec3 get_n() {
+		return (eye - at).normalize();
+	}vec3 get_u() {
+		vec3 n = get_n();
+		return up.cross(n).normalize();
+	}vec3 get_v() {
+		vec3 n = get_n(), u = get_u();
+		return n.cross(u).normalize();
+	}
+} cam;
 struct trackball
 {
 	bool	b_tracking = false;
@@ -14,6 +38,7 @@ struct trackball
 	void begin( const mat4& view_matrix, vec2 m );
 	void end() { b_tracking = false; }
 	mat4 update( vec2 m ) const;
+	vec3 eye0, at0, up0, n, u, v;
 };
 
 inline void trackball::begin( const mat4& view_matrix, vec2 m )
@@ -21,27 +46,37 @@ inline void trackball::begin( const mat4& view_matrix, vec2 m )
 	b_tracking = true;			// enable trackball tracking
 	m0 = m;						// save current mouse position
 	view_matrix0 = view_matrix;	// save current view matrix
+	eye0 = cam.eye;
+	at0 = cam.at;
+	up0 = cam.up;
+	n = cam.get_n(), u = cam.get_u(), v = cam.get_v();
 }
-
+float max(float a, float b) {
+	return a > b ? a : b;
+}
+float min(float a, float b) {
+	return a < b ? a : b;
+}
 inline mat4 trackball::update( vec2 m ) const
 {
 	// project a 2D mouse position to a unit sphere
-	static const vec3 p0 = vec3(0,0,1.0f);	// reference position on sphere
-	vec3 p1 = vec3(m-m0,0);					// displacement
-	if( !b_tracking || length(p1)<0.0001f ) return view_matrix0;		// ignore subtle movement
-	p1 *= scale;														// apply rotation scale
-	p1 = vec3(p1.x,p1.y,sqrtf(std::max(0.0f,1.0f-length2(p1)))).normalize();	// back-project z=0 onto the unit sphere
-
-	// find rotation axis and angle in world space
-	// - trackball self-rotation should be done at first in the world space
-	// - mat3(view_matrix0): rotation-only view matrix
-	// - mat3(view_matrix0).transpose(): inverse view-to-world matrix
-	vec3 v = mat3(view_matrix0).transpose()*p0.cross(p1);
-	float theta = asin( std::min(v.length(),1.0f) );
-
-	// resulting view matrix, which first applies
-	// trackball rotation in the world space
-	return view_matrix0*mat4::rotate(v.normalize(),theta);
+	vec3 p0 = vec3(0, 0, 1.0f); // reference position on sphere
+	vec3 p1 = vec3(m - m0, 0); // displacement
+	if (b_tracking != 1 || length(p1) < 0.002f) return view_matrix0;
+	p1 *= scale;
+	p1.z = sqrtf(max(0, 1.0f - length2(p1)));
+	p1 = p1.normalize();
+	vec3 vv = mat3(view_matrix0).transpose() * p0.cross(p1);
+	float theta = asin(min(vv.length(), 1.0f)) * 1.5f;// resulting view matrix, which first applies
+// trackball rotation in the world space
+	vec4 e = mat4::rotate(vv.normalize(), -theta) * vec4(eye0 - at0, 1);
+	cam.eye = at0 + vec3(e.x, e.y, e.z);
+	/*vec4 a = mat4::rotate(vv.normalize(), -theta) * vec4(at0, 1);
+	cam.at = vec3(a.x, a.y, a.z);*/
+	vec4 u = mat4::rotate(vv.normalize(), -theta) * vec4(up0, 1);
+	cam.up = vec3(u.x, u.y, u.z);
+	return mat4::look_at(cam.eye, cam.at, cam.up);
+	//return view_matrix0 * mat4::rotate(vv.normalize(), theta);
 }
 
 // utility function
