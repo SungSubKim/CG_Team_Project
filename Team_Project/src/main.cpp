@@ -34,12 +34,12 @@ static const char* help_image_path2 = "../bin/images/Map2.png";
 static const char* help_image_path3 = "../bin/images/Map3.png";
 static const char* select_image_path00 = "../bin/images/character_select00.png";
 static const char* select_image_path01 = "../bin/images/character_select01.png";
-static const char* select_image_path02 = "../bin/images/character_select02.png"; 
-static const char* select_image_path10 = "../bin/images/character_select10.png"; 
-static const char* select_image_path11 = "../bin/images/character_select11.png"; 
+static const char* select_image_path02 = "../bin/images/character_select02.png";
+static const char* select_image_path10 = "../bin/images/character_select10.png";
+static const char* select_image_path11 = "../bin/images/character_select11.png";
 static const char* select_image_path12 = "../bin/images/character_select12.png";
 static const char* select_image_path20 = "../bin/images/character_select20.png";
-static const char* select_image_path21 = "../bin/images/character_select21.png"; 
+static const char* select_image_path21 = "../bin/images/character_select21.png";
 static const char* select_image_path22 = "../bin/images/character_select22.png";
 static const char* final_image_path = "../bin/images/Final.png";
 static const char* die_image_path = "../bin/images/die.png";
@@ -102,7 +102,7 @@ GLuint	vertex_buffer = 0;	// ID holder for vertex buffer
 GLuint	index_buffer = 0;		// ID holder for index buffer
 GLuint	vertex_array = 0;	// ID holder for vertex array object*************************
 GLuint	snow_vertex_array = 0;
-GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0, SNOWTEX = 0, TITLETEX = 0, SELECTTEX00 = 0, SELECTTEX01 = 0, SELECTTEX02 = 0, SELECTTEX10 = 0, SELECTTEX11= 0, SELECTTEX12= 0, SELECTTEX20= 0, SELECTTEX21 = 0, SELECTTEX22 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX = 0, DIETEX = 0;
+GLuint	TEX_SKY = 0, SKY_LEFT = 0, SKY_DOWN = 0, SKY_BACK = 0, SKY_RIGHT = 0, SKY_UP = 0, SKY_FRONT = 0, SNOWTEX = 0, TITLETEX = 0, SELECTTEX00 = 0, SELECTTEX01 = 0, SELECTTEX02 = 0, SELECTTEX10 = 0, SELECTTEX11 = 0, SELECTTEX12 = 0, SELECTTEX20 = 0, SELECTTEX21 = 0, SELECTTEX22 = 0, HELPTEX1 = 0, HELPTEX2 = 0, HELPTEX3 = 0, FINALTEX = 0, DIETEX = 0;
 GLuint	mode;
 //*************************************
 // global variables
@@ -116,7 +116,8 @@ int		enemy_num = 3;
 int		before_game = 0; // 0(title) -> (1) help -> (2) game start
 int		difficulty = 0;
 int		selected_res[2];
-bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false, boss_collide = false;
+int old_stage = 0;
+bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false, boss_collide = false, aggro[3] = { false, false,false };
 
 std::vector<particle_t> particles;
 
@@ -145,11 +146,11 @@ void update()
 	glUniform1i(glGetUniformLocation(program, "before_game"), before_game);
 	glUniform1i(glGetUniformLocation(program, "b_help"), b_help);
 	glUniform1i(glGetUniformLocation(program, "stage"), stage);
-	if (before_game < 3 )
+	if (before_game < 3)
 		return;
 	if (stage == 4) {
 		static float final_time = (float)glfwGetTime();
-		if((float)glfwGetTime()-final_time > 3.0f)
+		if ((float)glfwGetTime() - final_time > 3.0f)
 			glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 
@@ -169,6 +170,7 @@ void update()
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
 	//몬스터 움직임 구현
+
 	model& model_duck1 = getModel("Enemy1");
 	model& model_duck2 = getModel("Enemy2");
 	model& model_duck3 = getModel("Enemy3");
@@ -176,14 +178,33 @@ void update()
 
 
 	vec3& e1_center = model_duck1.center;
-
+	vec3& e2_center = model_duck2.center;
+	vec3& e3_center = model_duck3.center;
 	if (!isfall && !b_help) {
-		if (difficulty == 1) {
+		if (aggro[0] || (difficulty == 1 && xz_distance(model_character.center, e1_center) < 18.0f)) {
 			trace_enemy_direction(model_character, model_duck1, t, old_t);
+			aggro[0] = true;
 		}
 		else {
 			e1_center = vec3(69 + 26 * cos(0.2f * t), 0, 35 + 14 * sin(0.2f * t));
 			model_duck1.theta = PI / 2.0f - 0.2f * t;
+		}
+
+		if (aggro[1] || (difficulty == 1 && xz_distance(model_character.center, e2_center) < 18.0f)) {
+			trace_enemy_direction(model_character, model_duck2, t, old_t);
+			aggro[1] = true;
+		}
+		else {
+			e2_center = vec3(69 + 26 * cos(0.2f * t + PI), 0, 35 + 14 * sin(0.2f * t + PI));
+			model_duck2.theta = PI / 2.0f * 3 - 0.2f * t;
+		}
+		if (aggro[2] || (difficulty == 1 && xz_distance(model_character.center, e3_center) < 18.0f)) {
+			trace_enemy_direction(model_character, model_duck3, t, old_t);
+			aggro[2] = true;
+		}
+		else {
+			e3_center = vec3(100, 0, 30 + 14 * sin(0.4f * t));
+			model_duck3.theta = cos(0.4f * t) > 0 ? PI / 2.0f : PI / 2.0f * 3;
 		}
 	}
 
@@ -254,6 +275,7 @@ void update()
 			life--;
 			engine->play2D(falling_mp3_src);
 			boss_collide = false;
+			s_center = vec3(10, 0, MAP_Z / 2);
 		}
 		break;
 	}
@@ -283,12 +305,36 @@ void update()
 		if (!old_b_die)
 			die_t = (float)glfwGetTime();
 		if ((float)glfwGetTime() - die_t > 2) {
-			before_game = 0;
-			stage = 0;
+			stage = 1;
 			life = 3;
 			b_die = false;
 			b_help = false;
 
+			old_stage = 0;
+			getModel("Enemy1").live = true;
+			getModel("Enemy2").live = true;
+			getModel("Enemy3").live = true;
+			getModel("Enemy1").center = vec3(69 + 26, 0, 35);
+			getModel("Enemy2").center = vec3(69 - 26, 0, 35);
+			getModel("Enemy3").center = vec3(100, 0, 30);
+			e1collide = false;
+			e2collide = false;
+			e3collide = false;
+			Bosscollide = false;
+			getModel("Character").center = vec3(2.3f, 0, 20);
+			getModel("triangle").center = vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);
+
+			getModel("triangle").stage = 1;
+			getModel("triangle").theta = 0;
+			getModel("triangle").center = vec3(100, 30, MAP_Z - 20);
+			getModel("triangle").visible = false;
+			b_triangle = false;
+			b_ability_to_get = false;
+			triangle_added = false;
+			for (int i = 0; i < 3; i++)
+				aggro[i] = false;
+
+			opacity = false;
 		}
 	}
 	old_b_die = b_die;
@@ -331,11 +377,14 @@ void update()
 	// glBindTexture(SKY_XXX) : 이 방향대로 붙어있으니 텍스처를 바꾸고싶으면 여기서 바꾸면 됨
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
+
 	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
+
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
 	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
+
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
@@ -345,9 +394,11 @@ void update()
 	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
 	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
 
+
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, SKY_UP);
 	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
+
 
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
@@ -361,7 +412,10 @@ void update()
 }
 void render()
 {
+	// clear screen (with background color) and clear depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// notify GL that we use our own program
 	glUseProgram(program);
 
 	float dpi_scale = cg_get_dpi_scale();
@@ -410,19 +464,45 @@ void render()
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
 		if (selected_res[0] == 0) {
-			if (selected_res[1] == 0) glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
-			else if (selected_res[1] == 1) glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
-			else glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
+			if (selected_res[1] == 0) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
+			}
+			else if (selected_res[1] == 1) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
+
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
+
+			}
 		}
 		else if (selected_res[0] == 1) {
-			if (selected_res[1] == 0) glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
-			else if (selected_res[1] == 1) glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
-			else glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
+			if (selected_res[1] == 0) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
+
+			}
+			else if (selected_res[1] == 1) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
+
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
+
+			}
 		}
 		else {
-			if (selected_res[1] == 0) glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
-			else if (selected_res[1] == 1) glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
-			else glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
+			if (selected_res[1] == 0) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
+
+			}
+			else if (selected_res[1] == 1) {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
+
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
+
+			}
 		}
 		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
 		glBindVertexArray(vertex_array);
@@ -450,6 +530,11 @@ void render()
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	mode = 0;
 	float alpha = 0.3f;
+	//false를 넣어준다.
+	/*if (opacity)
+		printf("true\n");
+	else
+		printf("false\n");*/
 	int model_number = 0;
 	for (auto& model : models) {
 		model_number++;
@@ -457,6 +542,8 @@ void render()
 		if (!model.visible)
 			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
 			continue;
+		//if (model.name == "Enemy1"||model.name=="Enemy2"||model.name=="Enemy3")
+		//	continue;
 		mesh2* pMesh = model.pMesh;
 		//메쉬포인터 지정하기, 이하 예전 코드와 동일
 		glBindVertexArray(pMesh->vertex_array);
@@ -497,15 +584,14 @@ void render()
 	glBindVertexArray(vertex_array);
 
 	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
-
 	float scale2 = 400;
-	model_matrix_background = mat4::translate(cam.at+vec3(0,0, scale2)) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(scale2);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, 0, scale2)) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 6;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(cam.at + vec3(0, 0, -scale2))  * mat4::scale(scale2);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, 0, -scale2)) * mat4::scale(scale2);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 3;
@@ -524,7 +610,7 @@ void render()
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(cam.at + vec3(0,-scale2, 0)) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(scale2);
+	model_matrix_background = mat4::translate(cam.at + vec3(0, -scale2, 0)) * mat4::rotate(vec3(1, 0, 0), -PI / 2) * mat4::scale(scale2);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 2;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
@@ -626,7 +712,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			glFinish();
 			delete_texture_cache();
 		}
-		else if (key == GLFW_KEY_SPACE && stage>0) {
+		else if (key == GLFW_KEY_SPACE && stage > 0) {
 			engine->play2D(attack_mp3_src, false);
 			b_space = true;
 		}
@@ -670,7 +756,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			model& m = getModel("triangle");
 			//b_triangle = false;
 			//b_ability_to_get = false;
-			if (xz_distance(c.center,m.center) <7)
+			if (xz_distance(c.center, m.center) < 7)
 				b_ability_to_get = !b_ability_to_get;
 		}
 		else if (key == GLFW_KEY_LEFT_CONTROL)
@@ -743,7 +829,7 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 				difficulty = 1;
 				selected_res[1] = 2;
 			}
-			else if (1029 < npos2.x&&npos2.x < 1211 && 28 < npos2.y&&npos2.y < 123&& selected_res[0]!=0&&selected_res[1]!=0) {
+			else if (1029 < npos2.x && npos2.x < 1211 && 28 < npos2.y && npos2.y < 123 && selected_res[0] != 0 && selected_res[1] != 0) {
 
 				before_game++;
 			}
@@ -846,7 +932,6 @@ void rotate_character(float t, float old_t, float ntheta) {
 		theta += 2 * PI;
 }
 void setStage() {
-	static int old_stage = 0;
 	model& model_ch = getModel("Character");
 	if (old_stage != stage) {
 		if (b_triangle)
@@ -865,9 +950,13 @@ void setStage() {
 				getModel("Enemy1").live = true;
 				getModel("Enemy2").live = true;
 				getModel("Enemy3").live = true;
-				getModel("Enemy1").center = vec3(96, 0, 16);
-				getModel("Enemy2").center = vec3(16, 0, 16);
-				getModel("Enemy3").center = vec3(8, 0, 32);
+				getModel("Enemy1").center = vec3(69 + 26, 0, 35);
+				getModel("Enemy2").center = vec3(69 - 26, 0, 35);
+				getModel("Enemy3").center = vec3(100, 0, 30);
+				e1collide = false;
+				e2collide = false;
+				e3collide = false;
+				Bosscollide = false;
 				getModel("Character").center = vec3(2.3f, 0, 20);
 				getModel("triangle").center = vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);
 
@@ -878,7 +967,10 @@ void setStage() {
 				b_triangle = false;
 				b_ability_to_get = false;
 				triangle_added = false;
-				
+				for (int i = 0; i < 3; i++)
+					aggro[i] = false;
+
+				opacity = false;
 			}
 			else if (old_stage == 2)
 				model_ch.center.x = 128 - 0.1f;

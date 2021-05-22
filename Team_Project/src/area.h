@@ -44,11 +44,8 @@ static float duration = 0.0f;
 int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_added) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
-	model& e1_character = getModel("Enemy1");
 	vec3& s_center = model_character.center;
-	vec3& e1_center = e1_character.center;
 	bool onLand_old = false, onLand_now = false;
-	bool onLand_old_e1 = false, onLand_now_e1 = false;
 	bool map1right = false;
 
 	for (auto& s : divided_map1_land) {
@@ -63,16 +60,19 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 			onLand_now = true;
 		}
 
-		if ((s.point.x <= old_e1_center.x && s.point.z <= old_e1_center.z && old_e1_center.z <= s.point.z + s.z_length))
-			onLand_old_e1 = true;
-		if ((s.point.x <= e1_center.x && s.point.z <= e1_center.z && e1_center.z <= s.point.z + s.z_length))
-			onLand_now_e1 = true;
 		/*map1right = (old_s_center.x <= s.point.x + s.x_length && s_center.x <= s.point.x + s.x_length);
 		if (!map1right) stage++;*/
 	}
 	//printf("%d %d\n", (old_s_center.x < 128 && 128 <= s_center.x),stage);
 	bool onObstacle_old = false, onObstacle_now = false;
-	bool onObstacle_old_e1 = false, onObstacle_now_e1 = false;
+	std::vector<model*> enemy;
+	enemy.push_back(&getModel("Enemy1"));
+	enemy.push_back(&getModel("Enemy2"));
+	enemy.push_back(&getModel("Enemy3"));
+	bool onObstacle_old_e[3] = { false, }, onObstacle_now_e[3] = { false, };
+
+	static vec3 old_e_center[3] = { enemy[0]->center,enemy[1]->center,enemy[2]->center };
+
 	for (auto& obs : divided_map1_obstacle) {
 		if ((obs.point.x <= old_s_center.x && old_s_center.x <= obs.point.x + obs.x_length
 			&& obs.point.z <= old_s_center.z && old_s_center.z <= obs.point.z + obs.z_length))
@@ -80,24 +80,29 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 		if ((obs.point.x <= s_center.x && s_center.x <= obs.point.x + obs.x_length
 			&& obs.point.z <= s_center.z && s_center.z <= obs.point.z + obs.z_length))
 			onObstacle_now = true;
-		if ((obs.point.x <= old_e1_center.x && old_e1_center.x <= obs.point.x + obs.x_length && obs.point.z <= old_e1_center.z && old_e1_center.z <= obs.point.z + obs.z_length))
-			onLand_old_e1 = true;
-		if ((obs.point.x <= e1_center.x && e1_center.x <= obs.point.x + obs.x_length && obs.point.z <= e1_center.z && e1_center.z <= obs.point.z + obs.z_length))
-			onLand_now_e1 = true;
+		for (int i = 0; i < 3; i++) {
+			if ((obs.point.x <= old_e_center[i].x && old_e_center[i].x <= obs.point.x + obs.x_length && obs.point.z <= old_e_center[i].z && old_e_center[i].z <= obs.point.z + obs.z_length))
+				onObstacle_old_e[i] = true;
+			if ((obs.point.x <= enemy[i]->center.x && enemy[i]->center.x <= obs.point.x + obs.x_length && obs.point.z <= enemy[i]->center.z && enemy[i]->center.z <= obs.point.z + obs.z_length))
+				onObstacle_now_e[i] = true;
+		}
 	}
 
-	if (pow((s_center.x - 69) / 25.0f, 2) + pow((s_center.z - 35) / 13.0f, 2) < 1)
-		onObstacle_now = true;
-	if (pow((old_s_center.x - 69) / 25.0f, 2) + pow((old_s_center.z - 35) / 13.0f, 2) < 1)
-		onObstacle_old = true;
-	if (pow((e1_center.x - 69) / 25.0f, 2) + pow((e1_center.z - 35) / 13.0f, 2) < 1)
-		onObstacle_now_e1 = true;
-	if (pow((old_e1_center.x - 69) / 25.0f, 2) + pow((old_e1_center.z - 35) / 13.0f, 2) < 1)
-		onObstacle_old_e1 = true;
-	if (!onObstacle_old && onObstacle_now) {
+	for (auto& e : enemy) {
+		if (pow((s_center.x - 69) / 25.0f, 2) + pow((s_center.z - 35) / 13.0f, 2) < 1)
+			onObstacle_now = true;
+		if (pow((old_s_center.x - 69) / 25.0f, 2) + pow((old_s_center.z - 35) / 13.0f, 2) < 1)
+			onObstacle_old = true;
+		for (int i = 0; i < 3; i++) {
+			if (pow((enemy[i]->center.x - 69) / 25.0f, 2) + pow((enemy[i]->center.z - 35) / 13.0f, 2) < 1)
+				onObstacle_now_e[i] = true;
+			if (pow((old_e_center[i].x - 69) / 25.0f, 2) + pow((old_e_center[i].z - 35) / 13.0f, 2) < 1)
+				onObstacle_now_e[i] = true;
+		}
+	}
+
+	if (!onObstacle_old && onObstacle_now)
 		CopyMemory(s_center, old_s_center, sizeof(vec3));
-
-	}
 	else if (onLand_old && !onLand_now) {
 		if (128 <= s_center.x) {
 			if (enemy_num == 0)
@@ -108,9 +113,15 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 		else
 			fall = true;
 	}
-	if ((!onObstacle_old_e1 && onObstacle_now_e1) || (onLand_old_e1 && !onLand_now_e1)) {
-		CopyMemory(e1_center, old_e1_center, sizeof(vec3));
+	for (int i = 0; i < 3; i++) {
+		if (!onObstacle_old_e[i] && onObstacle_now_e[i]) {
+			//printf("hi\n");
+			CopyMemory(enemy[i]->center, old_e_center[i], sizeof(vec3));
+		}
 	}
+	for (int i = 0; i < 3; i++)
+		CopyMemory(old_e_center[i], enemy[i]->center, sizeof(vec3));
+
 	static bool fall_triangle = false, old_fall_triangle = false;
 	static float falling_start = 0;
 	float t = (float)glfwGetTime();
@@ -123,7 +134,7 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 			play = true;
 		}
 		float dt_fall = t - falling_start;
-		if (getModel("triangle").center.y < -DEFAULT_HIGHT-5) {
+		if (getModel("triangle").center.y < -DEFAULT_HIGHT - 5) {
 			fall_triangle = false;
 			triangle_added = true;
 		}
@@ -136,7 +147,7 @@ int check_map1(bool& fall, int stage, int enemy_num, bool& play, bool& triangle_
 	return stage;
 }
 
-int check_map2(bool& fall, int stage,int difficulty) {
+int check_map2(bool& fall, int stage, int difficulty) {
 	//onLand_old,now는 각각 이전 프레임에 육지위에 있었는지 아닌지를 판단,bridge 또한 같은 방법으로 작동
 	model& model_character = getModel("Character");
 	vec3& s_center = model_character.center;
@@ -174,7 +185,7 @@ int check_map2(bool& fall, int stage,int difficulty) {
 			stage--;
 		else if (s_center.x >= 128)
 			stage++;
-		else if(difficulty==0 && onBridge_old)
+		else if (difficulty == 0 && onBridge_old)
 			CopyMemory(s_center, old_s_center, sizeof(vec3));
 		else
 			fall = true;
@@ -242,7 +253,7 @@ void trace_enemy_direction(model& source, model& destination, float t, float old
 	vec3& s_center = source.center;
 	vec3& d_center = destination.center;
 	vec3& direction_to_source = s_center - d_center;
-	vec3& diff_e = normalize(direction_to_source) * (t - old_t) * 10.0f;
+	vec3& diff_e = normalize(direction_to_source) * (t - old_t) * 15.0f;
 	diff_e.y = 0;
 	if (xz_distance(d_center, s_center) < 5.0f) {
 		destination.theta = destination.theta;
@@ -277,7 +288,7 @@ void trace_enemy_direction(model& source, model& destination, float t, float old
 void trace_enemy_direction_boss(model& source, model& destination, float t, float old_t, bool bell, bool opacity) {
 	static bool aggro = false;
 	vec3& s_center = vec3(0, 0, 0);
-	
+
 	if (aggro) {
 		s_center = source.center;
 	}
@@ -287,7 +298,8 @@ void trace_enemy_direction_boss(model& source, model& destination, float t, floa
 	}
 	if (xz_distance(source.center, destination.center) < 30.0f) {
 		aggro = true;
-	}else {
+	}
+	else {
 		aggro = false;
 	}
 
