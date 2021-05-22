@@ -10,7 +10,7 @@ The goal of this team project is implementing a game that uses OpenGL for main g
 <img width="1600" alt="Title image" src="./Team_Project/bin/images/CGTitle.png">
 
 ## How to Play?
-<img width="1600" alt="Title image" src="./Team_Project/bin/images/character_select_easy.png">
+<img width="1600" alt="Select image" src="./Team_Project/bin/images/character_select00.png">
 Choose your character and difficulty level
 
 Move: direction key
