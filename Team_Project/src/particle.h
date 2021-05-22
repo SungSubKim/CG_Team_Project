@@ -11,15 +11,15 @@ struct particle_t
 {
 	static constexpr int MAX_PARTICLES = 5;
 
-	vec2 pos;
-	vec4 color;
-	float scale;
-	float life;
+	vec2 pos = vec2(0);
+	vec4 color = vec4(0);
+	float scale = 0.0f;
+	float life = 0.0f;
 	float tmp_time = 0.0f;
 
 	//optional
-	float elapsed_time;
-	float time_interval;
+	float elapsed_time = 0.0f;
+	float time_interval = 0.0f;
 
 	void reset();
 	void update(float x, float y, bool space, int direction);

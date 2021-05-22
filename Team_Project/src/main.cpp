@@ -337,14 +337,11 @@ void update()
 	// glBindTexture(SKY_XXX) : 이 방향대로 붙어있으니 텍스처를 바꾸고싶으면 여기서 바꾸면 됨
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
-
 	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
-
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
 	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
-
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
@@ -354,11 +351,9 @@ void update()
 	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
 	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
 
-
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, SKY_UP);
 	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
-
 
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
@@ -372,10 +367,7 @@ void update()
 }
 void render()
 {
-	// clear screen (with background color) and clear depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// notify GL that we use our own program
 	glUseProgram(program);
 
 	float dpi_scale = cg_get_dpi_scale();
@@ -424,45 +416,19 @@ void render()
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
 		if (selected_res[0] == 0) {
-			if (selected_res[1] == 0) {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
-			}
-			else if (selected_res[1] == 1) {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
-
-			}
-			else {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
-
-			}
+			if (selected_res[1] == 0) glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
+			else if (selected_res[1] == 1) glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
+			else glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
 		}
 		else if (selected_res[0] == 1) {
-			if (selected_res[1] == 0) {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
-
-			}
-			else if (selected_res[1] == 1) {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
-
-			}
-			else {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
-
-			}
+			if (selected_res[1] == 0) glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
+			else if (selected_res[1] == 1) glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
+			else glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
 		}
 		else {
-			if (selected_res[1] == 0) {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
-
-			}
-			else if (selected_res[1] == 1) {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
-
-			}
-			else {
-				glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
-
-			}
+			if (selected_res[1] == 0) glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
+			else if (selected_res[1] == 1) glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
+			else glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
 		}
 		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
 		glBindVertexArray(vertex_array);
@@ -490,11 +456,6 @@ void render()
 	uloc = glGetUniformLocation(program, "snow"); if (uloc > -1) glUniform1i(uloc, false);
 	mode = 0;
 	float alpha = 0.3f;
-	//false를 넣어준다.
-	/*if (opacity)
-		printf("true\n");
-	else
-		printf("false\n");*/
 	int model_number = 0;
 	for (auto& model : models) {
 		model_number++;
@@ -502,8 +463,6 @@ void render()
 		if (!model.visible)
 			//model struct의 visible이 꺼져있으면 출력하지 않고 넘어간다.
 			continue;
-		//if (model.name == "Enemy1"||model.name=="Enemy2"||model.name=="Enemy3")
-		//	continue;
 		mesh2* pMesh = model.pMesh;
 		//메쉬포인터 지정하기, 이하 예전 코드와 동일
 		glBindVertexArray(pMesh->vertex_array);
@@ -545,13 +504,13 @@ void render()
 
 	//다시 sky변수에 true를 넣어 fragment shader로 넘긴다.
 
-	model_matrix_background = mat4::translate(100, 100, -250) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(100, 100, -250) * mat4::scale(300.0f, 300.0f, 10.0f);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 6;
 	glUniform1i(glGetUniformLocation(program, "mode"), mode);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
-	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 100.0f);
+	model_matrix_background = mat4::translate(100, 100, 350) * mat4::rotate(vec3(1, 0, 0), PI) * mat4::scale(300.0f, 300.0f, 10.0f);
 	model_matrix_background = model_matrix_background * mat4::rotate(vec3(0, 0, 1), PI);
 	uloc = glGetUniformLocation(program, "model_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, model_matrix_background);
 	mode = 3;
