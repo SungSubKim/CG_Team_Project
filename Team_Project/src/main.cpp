@@ -373,19 +373,15 @@ void update()
 	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 
-
 	//화면 skybox 부분
 	// glBindTexture(SKY_XXX) : 이 방향대로 붙어있으니 텍스처를 바꾸고싶으면 여기서 바꾸면 됨
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, SKY_LEFT);
-
 	glUniform1i(glGetUniformLocation(program, "SKY_LEFT"), 1);
-
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, SKY_DOWN);
 	glUniform1i(glGetUniformLocation(program, "SKY_DOWN"), 2);
-
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, SKY_BACK);
@@ -395,11 +391,9 @@ void update()
 	glBindTexture(GL_TEXTURE_2D, SKY_RIGHT);
 	glUniform1i(glGetUniformLocation(program, "SKY_RIGHT"), 4);
 
-
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, SKY_UP);
 	glUniform1i(glGetUniformLocation(program, "SKY_UP"), 5);
-
 
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, SKY_FRONT);
@@ -413,10 +407,7 @@ void update()
 }
 void render()
 {
-	// clear screen (with background color) and clear depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// notify GL that we use our own program
 	glUseProgram(program);
 
 	float dpi_scale = cg_get_dpi_scale();
@@ -465,45 +456,28 @@ void render()
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
 		if (selected_res[0] == 0) {
-			if (selected_res[1] == 0) {
+			if (selected_res[1] == 0) 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
-			}
-			else if (selected_res[1] == 1) {
+			else if (selected_res[1] == 1) 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
-
-			}
-			else {
+			else 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
-
-			}
 		}
 		else if (selected_res[0] == 1) {
-			if (selected_res[1] == 0) {
+			if (selected_res[1] == 0) 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
-
-			}
-			else if (selected_res[1] == 1) {
+			else if (selected_res[1] == 1) 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
-
-			}
-			else {
+			else 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
-
-			}
 		}
 		else {
-			if (selected_res[1] == 0) {
+			if (selected_res[1] == 0) 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
-
-			}
-			else if (selected_res[1] == 1) {
+			else if (selected_res[1] == 1) 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
-
-			}
-			else {
+			else 
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
-
-			}
 		}
 		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
 		glBindVertexArray(vertex_array);
