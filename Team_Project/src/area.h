@@ -1,4 +1,5 @@
 #pragma once
+//a
 #include <string>
 #include <vector>
 #define MGN 0.5f
