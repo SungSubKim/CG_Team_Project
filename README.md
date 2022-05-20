@@ -23,3 +23,7 @@ Help: F1 key
 3. Onebellfortune (JongUn Han)
 
 ## CopyRight
+
+## MSVCR120.DLL 에러
+https://ungdoli0916.tistory.com/29
+(웅카콜라) MSVCR120.dll 오류 1분 해결 방법
