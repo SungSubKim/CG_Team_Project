@@ -1,5 +1,5 @@
 #include "cgmath.h"			// slee's simple math library
-#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION // image 파일의 사용을 가능하게 하는 옵션
 #include "cgut.h"			// slee's OpenGL utility
 #include "cgut2.h"			// slee's OpenGL utility
 #include "trackball.h"
@@ -15,9 +15,10 @@
 bool init_text();
 void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
 void setStage();
+void rotate_character(float t, float old_t, float ntheta);
 
 //*************************************
-// global constants
+// global constants 각 이미지 파일과 음악 파일의 경로
 static const char* window_name = "Team project - Woori's Adventure";
 static const char* vert_shader_path = "../bin/shaders/model.vert";
 static const char* frag_shader_path = "../bin/shaders/model.frag";
@@ -48,41 +49,22 @@ static const char* attack_mp3_path = "../bin/sounds/attack.mp3";
 static const char* bell_mp3_path = "../bin/sounds/bell.mp3";
 static const char* falling_mp3_path = "../bin/sounds/falling.mp3";
 
-std::vector<vertex>	unit_circle_vertices;	// host-side vertices
-//*************************************
-// common structures
-//struct camera
-//{
-//	vec3	eye = vec3(0 + MAP_X / 2, 100, 80 + MAP_Z / 2);
-//	vec3	at = vec3(MAP_X / 2, 0, 0 + MAP_Z / 2);
-//	vec3	up = vec3(0, 1, 0);
-//	mat4	view_matrix = mat4::look_at(eye, at, up);
-//
-//	float	fovy = PI / 4.0f; // must be in radian
-//	float	aspect_ratio;
-//	float	dNear = 1.0f;
-//	float	dFar = 1000.0f;
-//	mat4	projection_matrix;
-//} cam;
-
-struct light_t
+struct light_t // 광원에 대한 정보, 빛의 방향, 주변광, 분산광, 반사광에 대하여 표현
 {
 	vec4	position = vec4(10.0f, 10.0f, 10.0f, 0.0f);   // directional light
 	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 };
-
-struct material_t
+light_t		light;
+struct material_t // 각각의 종류의 빛에 대하여 반응하는 색상의 정보를 나타낸 물질 정의
 {
 	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	float	shininess = 100000.0f;
 };
-
-mat4 model_matrix_background = mat4::translate(0, 0.0f, -250.0f) * mat4::scale(500.0f, 500.0f, 100.0f);
-
+material_t	material;
 // window objects
 GLFWwindow* window = nullptr;
 ivec2		window_size = ivec2(1280, 720); // cg_default_window_size(); // initial window size
@@ -108,38 +90,36 @@ GLuint	mode;
 // global variables
 float	alpha = 1.0f;
 int		frame = 0;		// index of rendering frames
-int		direc = 0;
-int		stage = 0;
-int		next = 0;
-int		life = 3;
-int		enemy_num = 3;
-int		before_game = 0; // 0(title) -> (1) help -> (2) game start
+int		direc = 0;		// 현재 캐릭터의 방향을 나타냄, 왼쪽1, 오른쪽2, 위쪽3, 아래쪽4
+int		stage = 0;		// 현재 스테이지
+int		old_stage = 0;	// 이전 스테이지
+int		life = 3;		// 캐릭터의 생명게이지
+int		enemy_num = 3;	// stage1의 적의 갯수, 0이 되면 삼각형이 떨어진다.
+int		before_game = 0; // 게임 시작전 사용되는 변수,0(title) -> (1) help -> (2) game start
+// easy hard난이도 구분용, difficulty가 0이면 쉬운 난이도, 스테이지 1에서 적이 따라오지 않으며
+// 스테이지 2에서 다리 중간에서 추락하지 않는다.
+// 반대로 difficulty가 1이면 어려운 난이도로 스테이지 1에서 적이 플레이어를 추적하며
+// 스테이지 2에서 다리 중간에서 추락이 가능해진다.
 int		difficulty = 0;
-int		selected_res[2];
-int old_stage = 0;
-bool	b_help = false, b_wireframe = false, b_space = false, character_stop = false, b_die = false, old_b_die = false, b_triangle = false, b_ability_to_get = false, bell = false, opacity = false, triangle_added = false, boss_collide = false, aggro[3] = { false, false,false };
-bool	prev_bell = false;
-std::vector<particle_t> particles;
-
-//*************************************
-// scene objects
-//
-//camera		cam;
-trackball	tb;
+// 0번 idx는 캐릭터의 번호(남캐,여캐)를 value로 지니고, 1번 idx는 난이도 쉬움1, 어려움 2를 value로 지닌다.
+int		selected_choice[2];
+bool b_help = false;		// F1키를 눌렀을 때 b_help가 활성화되며 렌더링이 도움페이지로 대체된다.
+bool b_space = false;		// particle을 발사하는 space키를 눌렀는지 확인해줌
+bool character_stop = false; // alt키를 누르면 정지한다.
+bool b_die = false, old_b_die = false; // 낙사, 보스충돌과 같은 상황의 죽은 상황을 나타냄
+bool b_triangle = false, b_ability_to_get = false; // 삼각형 아이템을 가지고 있는지, 가질수 있는만큼 근접했는지
+bool triangle_added = false;			// stage1의 삼각형이 추가되었는지
+bool bell = false, opacity = false, prev_bell = false;		//stage3의 벨과 투명영역에 관한 변수
+bool duck_aggro[3] = { false, false,false };// stage1의 오리의 도발여부
+bool boss_collide = false;				//stage3의 보스충돌여부
+// 배경의 위치를 조정해주는 행렬
+mat4 model_matrix_background = mat4::translate(0, 0.0f, -250.0f) * mat4::scale(500.0f, 500.0f, 100.0f);
+std::vector<particle_t> particles; // 눈 입자를 관리하는 벡터
 bool l = false, r = false, u = false, d = false; // 어느쪽으로 keyboard가 눌렸는지 flag
-float old_t = 0;					//update 함수에서 dt값 계산을 위해 쓰이는 old value
-float theta0 = 0;
-float counter = 0.0f;
-mat4 model_matrix0;
-light_t		light;
-material_t	material;
-int frame_counter = 0;
+float old_t = 0; //update 함수에서 dt값 계산을 위해 쓰이는 old value
+trackball	tb; // 트랙볼 전역변수
 //*************************************
-//float min(float a, float b) {
-//	return a < b ? a : b;
-//}
-//float& theta = getModel("Character").theta;
-void rotate_character(float t, float old_t, float ntheta);
+// function definition
 void update()
 {
 	glUseProgram(program);
@@ -181,26 +161,26 @@ void update()
 	vec3& e2_center = model_duck2.center;
 	vec3& e3_center = model_duck3.center;
 	if (!isfall && !b_help) {
-		if (aggro[0] || (difficulty == 1 && xz_distance(model_character.center, e1_center) < 18.0f)) {
+		if (duck_aggro[0] || (difficulty == 1 && xz_distance(model_character.center, e1_center) < 18.0f)) {
 			trace_enemy_direction(model_character, model_duck1, t, old_t);
-			aggro[0] = true;
+			duck_aggro[0] = true;
 		}
 		else {
 			e1_center = vec3(69 + 26 * cos(0.2f * t), 0, 35 + 14 * sin(0.2f * t));
 			model_duck1.theta = PI / 2.0f - 0.2f * t;
 		}
 
-		if (aggro[1] || (difficulty == 1 && xz_distance(model_character.center, e2_center) < 18.0f)) {
+		if (duck_aggro[1] || (difficulty == 1 && xz_distance(model_character.center, e2_center) < 18.0f)) {
 			trace_enemy_direction(model_character, model_duck2, t, old_t);
-			aggro[1] = true;
+			duck_aggro[1] = true;
 		}
 		else {
 			e2_center = vec3(69 + 26 * cos(0.2f * t + PI), 0, 35 + 14 * sin(0.2f * t + PI));
 			model_duck2.theta = PI / 2.0f * 3 - 0.2f * t;
 		}
-		if (aggro[2] || (difficulty == 1 && xz_distance(model_character.center, e3_center) < 18.0f)) {
+		if (duck_aggro[2] || (difficulty == 1 && xz_distance(model_character.center, e3_center) < 18.0f)) {
 			trace_enemy_direction(model_character, model_duck3, t, old_t);
-			aggro[2] = true;
+			duck_aggro[2] = true;
 		}
 		else {
 			e3_center = vec3(100, 0, 30 + 14 * sin(0.4f * t));
@@ -280,12 +260,11 @@ void update()
 		break;
 	}
 	b_triangle = getTriangle(b_triangle) && b_ability_to_get;
-	counter += t - old_t;
 	//stage clear조건
 	if (stage == 3) {
 		bell = bell_ring(t, old_t, b_space);
-		if (bell == true && prev_bell==false) {
-		
+		if (bell == true && prev_bell == false) {
+
 			engine->play2D(bell_mp3_src);
 		}
 		prev_bell = bell;
@@ -334,7 +313,7 @@ void update()
 			b_ability_to_get = false;
 			triangle_added = false;
 			for (int i = 0; i < 3; i++)
-				aggro[i] = false;
+				duck_aggro[i] = false;
 
 			opacity = false;
 		}
@@ -456,28 +435,28 @@ void render()
 	}
 	if (before_game == 1) {
 		glActiveTexture(GL_TEXTURE0);
-		if (selected_res[0] == 0) {
-			if (selected_res[1] == 0) 
+		if (selected_choice[0] == 0) {
+			if (selected_choice[1] == 0)
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX00);
-			else if (selected_res[1] == 1) 
+			else if (selected_choice[1] == 1)
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX01);
-			else 
+			else
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX02);
 		}
-		else if (selected_res[0] == 1) {
-			if (selected_res[1] == 0) 
+		else if (selected_choice[0] == 1) {
+			if (selected_choice[1] == 0)
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX10);
-			else if (selected_res[1] == 1) 
+			else if (selected_choice[1] == 1)
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX11);
-			else 
+			else
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX12);
 		}
 		else {
-			if (selected_res[1] == 0) 
+			if (selected_choice[1] == 0)
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX20);
-			else if (selected_res[1] == 1) 
+			else if (selected_choice[1] == 1)
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX21);
-			else 
+			else
 				glBindTexture(GL_TEXTURE_2D, SELECTTEX22);
 		}
 		glUniform1i(glGetUniformLocation(program, "SELECTTEX"), 0);
@@ -507,10 +486,7 @@ void render()
 	mode = 0;
 	float alpha = 0.3f;
 	//false를 넣어준다.
-	/*if (opacity)
-		printf("true\n");
-	else
-		printf("false\n");*/
+
 	int model_number = 0;
 	for (auto& model : models) {
 		model_number++;
@@ -657,7 +633,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		if (before_game == 2) {
 			if (key == GLFW_KEY_SPACE) {
 				before_game++;
-				if (selected_res[0] == 1) {
+				if (selected_choice[0] == 1) {
 					delete models[6].pMesh;
 					model hani = { "../bin/mesh/Character.obj","Character",vec3(2.3f, 0, 20),0.4f };
 					hani.pMesh = load_model(hani.path);
@@ -781,8 +757,8 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 			if (894 < npos2.x && npos2.x < 1181 && 64 < npos2.y && npos2.y < 150)
 				before_game++;
 			cnt = 2;
-			selected_res[0] = 0;
-			selected_res[1] = 0;
+			//selected_res[0] = 0;
+			//selected_res[1] = 0;
 			return;
 		}
 		if (before_game == 1) {
@@ -791,21 +767,21 @@ void mouse(GLFWwindow* window, int button, int action, int mods)
 				return;
 			if (269 < npos2.x && npos2.x < 596 && 124 < npos2.y && npos2.y < 585) {
 				//before_game++;
-				selected_res[0] = 1;
+				selected_choice[0] = 1;
 			}
 			else if (693 < npos2.x && npos2.x < 1018 && 124 < npos2.y && npos2.y < 585) {
 				//before_game++;
-				selected_res[0] = 2;
+				selected_choice[0] = 2;
 			}
 			else if (1055 < npos2.x && npos2.x < 1219 && 236 < npos2.y && npos2.y < 326) {
 				difficulty = 0;
-				selected_res[1] = 1;
+				selected_choice[1] = 1;
 			}
 			else if (1055 < npos2.x && npos2.x < 1219 && 380 < npos2.y && npos2.y < 471) {
 				difficulty = 1;
-				selected_res[1] = 2;
+				selected_choice[1] = 2;
 			}
-			else if (1029 < npos2.x && npos2.x < 1211 && 28 < npos2.y && npos2.y < 123 && selected_res[0] != 0 && selected_res[1] != 0) {
+			else if (1029 < npos2.x && npos2.x < 1211 && 28 < npos2.y && npos2.y < 123 && selected_choice[0] != 0 && selected_choice[1] != 0) {
 
 				before_game++;
 			}
@@ -933,7 +909,7 @@ void setStage() {
 				e2collide = false;
 				e3collide = false;
 				Bosscollide = false;
-				getModel("Character").center = vec3(2.3f, 0, 20); 
+				getModel("Character").center = vec3(2.3f, 0, 20);
 				getModel("Character").theta = 0;
 				getModel("triangle").center = vec3(MAP_X / 2, -DEFAULT_HIGHT, MAP_Z / 2);
 
@@ -945,7 +921,7 @@ void setStage() {
 				b_ability_to_get = false;
 				triangle_added = false;
 				for (int i = 0; i < 3; i++)
-					aggro[i] = false;
+					duck_aggro[i] = false;
 
 				opacity = false;
 			}
